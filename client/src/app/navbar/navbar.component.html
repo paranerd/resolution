@@ -1,0 +1,31 @@
+<nav class="w-full h-16 p-1 flex items-center justify-between flex-wrap">
+    <div id="brand">
+        <a [routerLink]="['/']" class="ml-5 font-semibold text-xl tracking-tight">
+            <span style="color: #4285f4;">O</span>
+            <span style="color: #ea4335;">p</span>
+            <span style="color: #fbbc05;">e</span>
+            <span style="color: #34a853;">n</span>
+            Photos
+        </a>
+    </div>
+
+    <form id="search-form">
+        <button style="width: 50px;"><i class="fas fa-search"></i></button>
+        <input class="search" style="width: 100%; background: none; outline: none; font-family: 'roboto-500';" type="text" placeholder="Suchen..." />
+        <button class="clear-search" style="width: 50px;"><i class="fas fa-times"></i></button>
+    </form>
+
+    <div class="relative ml-auto" style="display: flex;">
+        <!-- Search -->
+        <button id="search-button" class="navbar-button"><i class="fas fa-search"></i></button>
+
+        <!-- Upload -->
+        <button class="navbar-button plus-text">
+            <svg width="24px" height="24px" style="fill: #5f6368;" viewBox="0 0 24 24"><path d="M4 15h2v3h12v-3h2v3c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2m4.41-7.59L11 7.83V16h2V7.83l2.59 2.59L17 9l-5-5-5 5 1.41 1.41z"></path></svg>
+            <span>Upload</span>
+        </button>
+
+        <!-- User -->
+        <button class="navbar-button"><i class="fas fa-user-circle fa-2x"></i></button>
+    </div>
+</nav>
