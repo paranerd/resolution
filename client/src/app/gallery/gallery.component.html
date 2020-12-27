@@ -1,0 +1,24 @@
+<div id="gallery">
+    <a class="item" [class.selected]="item.selected" [ngStyle]="{'height': item.uiHeight + 'px', 'width': item.uiWidth + 'px'}" *ngFor="let item of itemsFinal; let i = index;" (click)="open(i, item)">
+        <!-- Image -->
+        <div class="image lazy" [ngStyle]="{'background-image': 'url(' + item.url}"></div>
+
+        <!-- Checkbox -->
+        <div class="item-checkbox">
+            <!-- Blue highlight -->
+            <!--<svg class="item-checkbox-shine" width="24px" height="24px" viewBox="0 0 24 24" (click)="$event.stopPropagation(); toggleSelect(item)"><circle cx="12" cy="12" r="17"></circle></svg>-->
+
+            <!-- Outer ring -->
+            <svg class="item-checkbox-outline" *ngIf="selectedCount > 0" width="24px" height="24px" viewBox="0 0 24 24" (click)="$event.stopPropagation(); toggleSelect(item)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"></path></svg>
+
+            <!-- White background -->
+            <svg class="item-checkbox-white" *ngIf="item.selected" width="24px" height="24px" viewBox="0 0 24 24" (click)="$event.stopPropagation(); toggleSelect(item)"><circle cx="12.5" cy="12.2" r="8.292"></circle></svg>
+
+            <!-- White background -->
+            <!--<svg class="item-checkbox-white" *ngIf="item.selected" width="24px" height="24px" viewBox="0 0 24 24" (click)="$event.stopPropagation(); toggleSelect(item)"><circle opacity=".26" fill="url(#checkboxShadowCircle)" cx="12" cy="13.512" r="10.488"></circle><circle fill="#FFF" cx="12" cy="12.2" r="8.292"></circle></svg>-->
+
+            <!-- Semi checked -->
+            <svg class="item-checkbox-checkmark" [ngClass]="{'item-checkbox-blue': item.selected, 'item-checkbox-white': selectedCount > 0}" width="24px" height="24px" viewBox="0 0 24 24" (click)="$event.stopPropagation(); toggleSelect(item)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+        </div>
+    </a>
+</div>

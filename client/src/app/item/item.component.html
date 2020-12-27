@@ -1,0 +1,48 @@
+<!-- Spinner -->
+<app-spinner id="spinner" *ngIf="loading"></app-spinner>
+
+<!-- Image -->
+<div id="image">
+    <div *ngIf="item" class="item" [ngStyle]="{'height': item.uiHeight + 'px', 'width': item.uiWidth + 'px', 'background': 'url(' + item.url}"></div>
+</div>
+
+<div id="controls">
+    <!-- Header -->
+    <div id="header">
+        <!-- Back -->
+        <a class="item-header-button" (click)="close()">
+            <svg width="24px" height="24px" class="item-header-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path></svg>
+        </a>
+
+        <!-- Context actions -->
+        <div class="relative ml-auto" style="display: flex;">
+            <!-- Menu -->
+            <div class="item-header-button" (click)="menuOpen = !menuOpen">
+                <svg width="24px" height="24px" class="item-header-icon" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Navigation -->
+    <div id="image-navigation">
+        <!-- Previous -->
+        <div class="navigation-area previous" (click)="previous()">
+            <div class="navigation-arrow">
+                <svg width="36px" height="36px" viewBox="0 0 24 24"><path d="M15.41 16.09l-4.58-4.59 4.58-4.59L14 5.5l-6 6 6 6z"></path></svg>
+            </div>
+        </div>
+
+        <!-- Next -->
+        <div class="navigation-area next" (click)="next()">
+            <div class="navigation-arrow">
+                <svg width="36px" height="36px" viewBox="0 0 24 24"><path d="M8.59 16.34l4.58-4.59-4.58-4.59L10 5.75l6 6-6 6z"></path></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dropdown menu -->
+    <div class="dropdown" *ngIf="menuOpen">
+        <!-- Download -->
+        <div class="dropdown-item" (click)="download()"><i class="fas fa-download"></i><span>Download</span></div>
+    </div>
+</div>
