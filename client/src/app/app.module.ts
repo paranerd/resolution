@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -14,6 +14,7 @@ import { ItemComponent } from './item/item.component';
 import { ApiService } from './services/api.service';
 import { StateService } from './services/state.service';
 import { SpinnerComponent } from './spinner/spinner.component';
+import { CastComponent } from './cast/cast.component';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,9 @@ import { SpinnerComponent } from './spinner/spinner.component';
     AlbumsComponent,
     ItemComponent,
     SpinnerComponent,
+    CastComponent,
   ],
+  schemas: [ CUSTOM_ELEMENTS_SCHEMA ],
   imports: [
     BrowserModule,
     AppRoutingModule,
