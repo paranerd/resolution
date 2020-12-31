@@ -11,7 +11,7 @@ export class CastComponent implements OnInit {
 
     constructor() {
         if (!this.scriptLoaded) {
-            this.loadScript('assets/js/sender.js');
+            this.loadScript('assets/js/cast.js');
             this.scriptLoaded = true;
         }
     }
