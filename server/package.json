@@ -18,7 +18,7 @@
     "express": "^4.17.1",
     "image-size": "^0.9.3",
     "mime-types": "^2.1.27",
-    "mongoose": "^5.11.8",
+    "mongoose": "^5.11.9",
     "sharp": "^0.26.3",
     "uuid": "^8.3.2"
   }
