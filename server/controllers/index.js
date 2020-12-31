@@ -12,5 +12,6 @@ if (!process.env.PRODUCTION) {
 
 // Include all controllers
 router.use('/api/item', require('./item').router);
+router.use('/cast', require('./cast').router);
 
 module.exports = router;
