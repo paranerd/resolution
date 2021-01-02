@@ -14,7 +14,8 @@ import { ItemComponent } from './item/item.component';
 import { ApiService } from './services/api.service';
 import { StateService } from './services/state.service';
 import { SpinnerComponent } from './spinner/spinner.component';
-import { CastComponent } from './cast/cast.component';
+import { CastSenderComponent } from './cast-sender/cast-sender.component';
+import { CastReceiverComponent } from './cast-receiver/cast-receiver.component';
 
 @NgModule({
   declarations: [
@@ -26,7 +27,8 @@ import { CastComponent } from './cast/cast.component';
     AlbumsComponent,
     ItemComponent,
     SpinnerComponent,
-    CastComponent,
+    CastSenderComponent,
+    CastReceiverComponent,
   ],
   schemas: [ CUSTOM_ELEMENTS_SCHEMA ],
   imports: [

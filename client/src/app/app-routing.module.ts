@@ -3,6 +3,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { HomeComponent } from './home/home.component';
 import { AlbumsComponent } from './albums/albums.component';
 import { ItemComponent } from './item/item.component';
+import { CastReceiverComponent } from './cast-receiver/cast-receiver.component';
 
 const routes: Routes = [
     {
@@ -17,6 +18,10 @@ const routes: Routes = [
         path: 'item/:id',
         component: ItemComponent,
     },
+    {
+        path: 'cast',
+        component: CastReceiverComponent,
+    }
 ];
 
 @NgModule({

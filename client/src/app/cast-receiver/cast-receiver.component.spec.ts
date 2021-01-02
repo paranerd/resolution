@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CastComponent } from './cast.component';
+import { CastReceiverComponent } from './cast-receiver.component';
 
-describe('CastComponent', () => {
-  let component: CastComponent;
-  let fixture: ComponentFixture<CastComponent>;
+describe('CastReceiverComponent', () => {
+  let component: CastReceiverComponent;
+  let fixture: ComponentFixture<CastReceiverComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ CastComponent ]
+      declarations: [ CastReceiverComponent ]
     })
     .compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(CastComponent);
+    fixture = TestBed.createComponent(CastReceiverComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
