@@ -14,7 +14,7 @@ const TMP_PATH = path.join(__dirname, '..', 'tmp');
 
 router.get('/scan', async (req, res) => {
     await scan(process.env.MEDIA_DIR);
-    res.send('Done.');
+    res.send('Scan done.');
 });
 
 async function scan(currentPath) {
@@ -82,11 +82,16 @@ router.get('/download', async (req, res) => {
 });
 
 router.get('/:id', async (req, res) => {
-    const width = parseInt(req.query.w) || 300;
-    const height = parseInt(req.query.h) || 300;
-
     try {
         const item = await Item.findOne({id: req.params.id});
+
+        if (!item) {
+            res.sendStatus(404);
+            return;
+        }
+
+        const width = parseInt(req.query.w) || item.width;
+        const height = parseInt(req.query.h) || item.height;
 
         res.type('image/jpeg');
     
