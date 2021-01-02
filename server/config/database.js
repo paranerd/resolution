@@ -15,6 +15,9 @@ function connectWithRetry() {
             console.error(`Failed to connect to mongo on startup - retrying in ${SECONDS_BETWEEN_RETRIES} sec`, err);
             setTimeout(connectWithRetry, SECONDS_BETWEEN_RETRIES * 1000);
         }
+        else {
+            console.log("MongoDB connected");
+        }
     });
 };
 
