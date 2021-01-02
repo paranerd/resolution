@@ -9,8 +9,10 @@ declare var chrome: any;
     selector: 'app-cast-sender',
     templateUrl: './cast-sender.component.html',
     styleUrls: ['./cast-sender.component.scss']
-  })
-  export class CastSenderComponent implements OnInit {
+})
+
+export class CastSenderComponent implements OnInit {
+    host: string = window.location.protocol + "//" + window.location.host;
     scriptsLoaded: boolean = false;
     _id: string;
     @Input()
@@ -81,7 +83,7 @@ declare var chrome: any;
         }
 
         const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-        const currentMediaURL = `${environment.fullApiUrl}/item/${id}`;
+        const currentMediaURL = `${this.host}${environment.apiUrl}/item/${id}`;
         const contentType = "image/jpeg";
         const mediaInfo = new chrome.cast.media.MediaInfo(currentMediaURL, contentType);
         const request = new chrome.cast.media.LoadRequest(mediaInfo);
