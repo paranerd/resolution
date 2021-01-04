@@ -17,11 +17,7 @@ COPY . .
 # Build Angular
 RUN npm run build
 
-# Map port
-EXPOSE ${PORT}
-
 # Add environment variable
-ENV DOCKER=true
 ENV PORT=${PORT}
 
 # Start server
