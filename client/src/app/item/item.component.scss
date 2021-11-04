@@ -1,131 +1,149 @@
 #controls {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
 }
 
 #header {
-    padding: 0 2rem;
-    width: 100%;
-    height: 60px;
-    background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0));
-    display: flex;
-    align-items: center;
-    color: white;
+  padding: 0 2rem;
+  width: 100%;
+  height: 60px;
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0));
+  display: flex;
+  align-items: center;
+  color: white;
 }
 
 #image {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-    background: black;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: -1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: -1;
+}
+
+.context-actions {
+  position: relative;
+  margin-left: auto;
+  display: flex;
+  flex-direction: row;
 }
 
 .item-header-button {
-    height: 50px;
-    width: 50px;
-    border-radius: 5rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
+  height: 50px;
+  width: 50px;
+  border-radius: 5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
 }
 
 .item-header-button:hover {
-    background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .item-header-icon {
-    fill: #fff;
+  fill: #fff;
 }
 
 #image-navigation {
-    display: flex;
-    flex-direction: row;
-    flex: 1;
-    justify-content: space-between;
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  justify-content: space-between;
 }
 
 .navigation-area {
-    padding: 0 2rem;
-    width: 30%;
-    display: flex;
-    flex: 0 0 auto;
-    align-items: center;
-    color: white;
-    cursor: pointer;
+  padding: 0 2rem;
+  width: 30%;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  color: white;
+  cursor: pointer;
 
-    &.previous {
-        justify-content: flex-start;
-    }
+  &.previous {
+    justify-content: flex-start;
+  }
 
-    &.next {
-        justify-content: flex-end;
-    }
+  &.next {
+    justify-content: flex-end;
+  }
 
-    &:hover {
-        & .navigation-arrow {
-            visibility: visible;
-        }
+  &:hover {
+    & .navigation-arrow {
+      visibility: visible;
     }
+  }
 }
 
 .navigation-arrow {
-    height: 60px;
-    width: 60px;
-    border-radius: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255,255,255,0.2);
-    visibility: hidden;
+  height: 60px;
+  width: 60px;
+  border-radius: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  visibility: hidden;
 
-    & svg {
-        fill: currentColor;
-    }
+  & svg {
+    fill: currentColor;
+  }
 }
 
 #spinner {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .dropdown {
-    position: absolute;
-    padding: .25rem 0;
-    right: 0;
-    margin-top: .5rem;
-    width: 12rem;
-    border-radius: .25rem;
-    color: #333;
-    background: #fff;
+  position: absolute;
+  padding: 0.25rem 0;
+  right: 0;
+  margin-top: 0.5rem;
+  width: 12rem;
+  border-radius: 0.25rem;
+  color: #333;
+  background: #fff;
 }
 
 .dropdown-item {
-    padding: 1rem 1rem;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
+  padding: 1rem 1rem;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
 
-    &:hover {
-        background: #f1f1f1;
-    }
+  &:hover {
+    background: #f1f1f1;
+  }
 
-    & span {
-        margin-left: 1rem;
-    }
+  & span {
+    margin-left: 1rem;
+  }
+}
+
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  width: 100%;
+  cursor: default;
 }
