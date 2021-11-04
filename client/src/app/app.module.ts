@@ -16,6 +16,7 @@ import { StateService } from './services/state.service';
 import { SpinnerComponent } from './spinner/spinner.component';
 import { CastSenderComponent } from './cast-sender/cast-sender.component';
 import { CastReceiverComponent } from './cast-receiver/cast-receiver.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
   declarations: [
@@ -35,6 +36,7 @@ import { CastReceiverComponent } from './cast-receiver/cast-receiver.component';
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
+    FontAwesomeModule,
   ],
   providers: [
     ApiService,

@@ -2,6 +2,8 @@ import { Component, OnInit, HostListener } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Item } from '@app/models/item.model';
 
+import { faDownload } from '@fortawesome/free-solid-svg-icons'
+
 import { ApiService } from '@app/services/api.service';
 import { StateService } from '@app/services/state.service';
 
@@ -17,20 +19,21 @@ export class ItemComponent implements OnInit {
     id: string;
     subscription: any;
     item: Item;
-    updateCommand: number;
+    currentLoadJobTimestamp: number;
     pos: number;
     error: string;
     loading: boolean = false;
     items: Array<Item> = [];
     menuOpen: boolean = false;
+    faDownload = faDownload;
 
     @HostListener('window:resize', ['$event'])
     onResize(event) {
-        const command = Date.now();
-        this.updateCommand = command;
+        const loadJobTimestamp = Date.now();
+        this.currentLoadJobTimestamp = loadJobTimestamp;
 
         setTimeout(() => {
-            if (this.updateCommand == command) {
+            if (this.currentLoadJobTimestamp == loadJobTimestamp) {
                 this.loadItem();
             }
         }, 100);

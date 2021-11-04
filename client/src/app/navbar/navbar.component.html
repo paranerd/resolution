@@ -1,6 +1,6 @@
-<nav class="w-full h-16 p-1 flex items-center justify-between flex-wrap">
+<nav>
     <div id="brand">
-        <a [routerLink]="['/']" class="ml-5 font-semibold text-xl tracking-tight">
+        <a class="logo" [routerLink]="['/']">
             <span style="color: #4285f4;">O</span>
             <span style="color: #ea4335;">p</span>
             <span style="color: #fbbc05;">e</span>
@@ -10,14 +10,20 @@
     </div>
 
     <form id="search-form">
-        <button style="width: 50px;"><i class="fas fa-search"></i></button>
-        <input class="search" style="width: 100%; background: none; outline: none; font-family: 'roboto-500';" type="text" placeholder="Suchen..." />
-        <button class="clear-search" style="width: 50px;"><i class="fas fa-times"></i></button>
+        <button style="width: 50px;">
+            <fa-icon [icon]="faSearch"></fa-icon>
+        </button>
+        <input id="search" type="text" placeholder="Suchen..." />
+        <button class="clear-search">
+            <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
     </form>
 
-    <div class="relative ml-auto" style="display: flex;">
+    <div class="navbar-right">
         <!-- Search -->
-        <button id="search-button" class="navbar-button"><i class="fas fa-search"></i></button>
+        <button id="search-button" class="navbar-button">
+            <fa-icon [icon]="faSearch"></fa-icon>
+        </button>
 
         <!-- Upload -->
         <button class="navbar-button plus-text">
@@ -26,6 +32,8 @@
         </button>
 
         <!-- User -->
-        <button class="navbar-button"><i class="fas fa-user-circle fa-2x"></i></button>
+        <button class="navbar-button">
+            <fa-icon [icon]="faUserCircle" class="fa-2x"></fa-icon>
+        </button>
     </div>
 </nav>

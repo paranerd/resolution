@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { State, StateService } from '@app/services/state.service';
 import { Observable } from 'rxjs';
+import { faDownload } from '@fortawesome/free-solid-svg-icons'
 
 import { ApiService } from '@app/services/api.service';
 
@@ -14,6 +15,7 @@ export class HomeComponent implements OnInit {
     state: Observable<State>;
     stateSubscription: any;
     selectedCount: number = 0;
+    faDownload = faDownload;
   
     constructor(private stateService: StateService, private api: ApiService) {
         this.state = this.stateService.state;

@@ -15,7 +15,7 @@
         </a>
 
         <!-- Context actions -->
-        <div class="relative ml-auto" style="display: flex;">
+        <div class="context-actions">
             <!-- Cast -->
             <div class="item-header-button">
               <app-cast-sender [id]="id"></app-cast-sender>
@@ -45,9 +45,15 @@
         </div>
     </div>
 
+    <!-- Backdrop -->
+    <button *ngIf="menuOpen" (click)="menuOpen = false" tabindex="-1" class="backdrop"></button>
+
     <!-- Dropdown menu -->
     <div class="dropdown" *ngIf="menuOpen">
         <!-- Download -->
-        <div class="dropdown-item" (click)="download()"><i class="fas fa-download"></i><span>Download</span></div>
+        <div class="dropdown-item" (click)="download()">
+            <fa-icon [icon]="faDownload"></fa-icon>
+            <span>Download</span>
+        </div>
     </div>
 </div>
