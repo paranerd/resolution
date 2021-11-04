@@ -10,9 +10,9 @@ const connectionParams = {
 };
 
 function connectWithRetry() {
-    return mongoose.connect(connectionString, connectionParams, function(err) {
+    return mongoose.connect(connectionString, connectionParams, function (err) {
         if (err) {
-            console.error(`Failed to connect to mongo on startup - retrying in ${SECONDS_BETWEEN_RETRIES} sec`, err);
+            console.error(`Failed to connect to mongo on startup - retrying in ${SECONDS_BETWEEN_RETRIES}s`, err);
             setTimeout(connectWithRetry, SECONDS_BETWEEN_RETRIES * 1000);
         }
         else {
