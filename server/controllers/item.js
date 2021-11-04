@@ -5,20 +5,52 @@ const archiver = require('archiver');
 const mime = require('mime-types');
 const fs = require('fs');
 const path = require('path');
+const ExifImage = require('exif').ExifImage;
+
 const Item = require('../models/item');
 const Errors = require('../util/errors');
 
 const router = express.Router();
 
+// Temp path for zip files while downloading
 const TMP_PATH = path.join(__dirname, '..', 'tmp');
 
 router.get('/scan', async (req, res) => {
-    await scan(process.env.MEDIA_DIR);
-    res.send('Scan done.');
+    const count = await scan(process.env.MEDIA_DIR);
+    res.send(`Scanned ${count} item(s).`);
 });
 
+/**
+ * Read EXIF data.
+ * 
+ * @param {string} filePath 
+ * @returns {Promise}
+ */
+async function readExif(filePath) {
+    return new Promise((resolve, reject) => {
+        try {
+            new ExifImage({ image: filePath }, function (err, exifData) {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(exifData);
+                }
+            });
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+/**
+ * Recursively scan path for images and store to database.
+ * 
+ * @param {string} currentPath 
+ * @returns {number}
+ */
 async function scan(currentPath) {
     const files = fs.readdirSync(currentPath);
+    let count = 0;
 
     for (const file of files) {
         const absPath = path.join(currentPath, file);
@@ -33,22 +65,40 @@ async function scan(currentPath) {
             continue;
         }
 
+        // Get image dimensions
         const dimensions = sizeOf(absPath);
-        const item = await Item.findOrCreate({
+
+        // Check if image is rotated (to switch width and height)
+        const rotated = [6, 8].includes(dimensions.orientation);
+
+        // Read EXIF data (JPEG only)
+        let exif = null;
+        try {
+            exif = await readExif(absPath);
+        }
+        catch (err) {}
+
+        await Item.findOrCreate({
             title: file,
             path: absPath,
-            height: dimensions.height,
-            width: dimensions.width,
+            height: rotated ? dimensions.width : dimensions.height,
+            width: rotated ? dimensions.height : dimensions.width,
+            orientation: dimensions.orientation || 1,
+            exif: {
+                dateTimeOriginal: exif?.exif?.DateTimeOriginal,
+            },
         });
 
-        await item.save();
+        count++;
     }
+
+    return count;
 }
 
 router.get('/download', async (req, res) => {
     const ids = req.query.ids;
 
-    const items = await Item.find({id: {$in: ids}});
+    const items = await Item.find({ id: { $in: ids } });
     let downloadPath;
     let removeAfterDownload = false;
 
@@ -63,11 +113,11 @@ router.get('/download', async (req, res) => {
     } catch (err) {
         console.error(err);
         const status = err.status ? err.status : 500;
-        res.status(status).json({'error': err.message});
+        res.status(status).json({ 'error': err.message });
         return;
     }
 
-    res.download(downloadPath, function(err) {
+    res.download(downloadPath, function (err) {
         if (err) {
             console.error("Error downloading:", err);
         }
@@ -83,7 +133,7 @@ router.get('/download', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const item = await Item.findOne({id: req.params.id});
+        const item = await Item.findOne({ id: req.params.id });
 
         if (!item) {
             res.sendStatus(404);
@@ -94,13 +144,13 @@ router.get('/:id', async (req, res) => {
         const height = parseInt(req.query.h) || item.height;
 
         res.type('image/jpeg');
-    
+
         // Get the resized image
         resize(item.path, width, height).pipe(res);
     } catch (err) {
         console.error(err);
         const status = err.status ? err.status : 500;
-        res.status(status).json({'error': err.message});
+        res.status(status).json({ 'error': err.message });
     }
 });
 
@@ -112,7 +162,7 @@ router.get('/', async (req, res) => {
             query.id = req.query.id;
         }
 
-        const matchQuery = {$match: query};
+        const matchQuery = { $match: query };
 
         const aggregation = [matchQuery];
 
@@ -122,10 +172,10 @@ router.get('/', async (req, res) => {
         // Results per page
         const pageSize = !isNaN(Number(req.query.limit)) ? Number(req.query.limit) : 100000000;
 
-        const items = await Item.aggregate(aggregation.concat([{$skip: (page - 1) * pageSize}, {$limit: pageSize}])).allowDiskUse(true);
+        const items = await Item.aggregate(aggregation.concat([{ $skip: (page - 1) * pageSize }, { $limit: pageSize }])).allowDiskUse(true);
 
         // Get total number of results without limit
-        const count = await Item.aggregate([matchQuery, {$project: {_id: 1}}, {$count: "total"}]);
+        const count = await Item.aggregate([matchQuery, { $project: { _id: 1 } }, { $count: "total" }]);
         const total = count.length ? count[0]['total'] : 0;
 
         // Set pages
@@ -158,10 +208,16 @@ function getTimestring() {
     return year + "-" + month + "-" + day + "_" + hours + "" + minutes + "" + seconds + "." + millis;
 }
 
+/**
+ * Zip files.
+ * 
+ * @param {array} items 
+ * @returns {Promise}
+ */
 async function zip(items) {
     return new Promise((resolve, reject) => {
         if (!fs.existsSync(TMP_PATH)) {
-            fs.mkdirSync(TMP_PATH, {recursive: true});
+            fs.mkdirSync(TMP_PATH, { recursive: true });
         }
 
         // Determine output path
@@ -176,16 +232,16 @@ async function zip(items) {
             zlib: { level: 9 }
         });
 
-        output.on('close', function() {
+        output.on('close', function () {
             resolve(resolve(outputPath));
         });
 
         // Error handling
-        archive.on('warning', function(err) {
+        archive.on('warning', function (err) {
             reject(err);
         });
 
-        archive.on('error', function(err) {
+        archive.on('error', function (err) {
             reject(err);
         });
 
@@ -200,15 +256,23 @@ async function zip(items) {
     });
 }
 
-function resize(p, height, width) {
-    const readStream = fs.createReadStream(p);
+/**
+ * Resize image.
+ * 
+ * @param {string} imagePath
+ * @param {number} width
+ * @param {number} height
+ * @returns {Stream}
+ */
+function resize(imagePath, width, height) {
+    const readStream = fs.createReadStream(imagePath);
 
     readStream.on('error', (err) => {
         throw err;
     });
 
     // Define transformation
-    const transform = sharp().jpeg().resize(height, width).withMetadata();
+    const transform = sharp().jpeg().rotate().resize(width, height).withMetadata();
 
     return readStream.pipe(transform);
 }

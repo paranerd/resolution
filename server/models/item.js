@@ -9,6 +9,10 @@ let ItemSchema = new mongoose.Schema({
     path: {type: String, required: true},
     height: {type: Number, required: true},
     width: {type: Number, required: true},
+    orientation: {type: Number, required: true},
+    exif: {
+        dateTimeOriginal: {type: String},
+    },
 });
 
 ItemSchema.pre('save', function() {

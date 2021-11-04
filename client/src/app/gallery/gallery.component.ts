@@ -26,7 +26,7 @@ export class GalleryComponent implements OnInit {
     loading: boolean;
     error: string;
     totalResults: number;
-    lazyloadCommand: number;
+    currentLoadJobTimestamp: number;
 
     @HostListener('window:resize', ['$event'])
     onResize(event: any) {
@@ -39,18 +39,18 @@ export class GalleryComponent implements OnInit {
     }
 
     lazyload() {
-        const command = Date.now();
-        this.lazyloadCommand = command;
+        const loadJobTimestamp = Date.now();
+        this.currentLoadJobTimestamp = loadJobTimestamp;
 
         setTimeout(() => {
-            if (this.lazyloadCommand == command) {
+            if (this.currentLoadJobTimestamp == loadJobTimestamp) {
                 const items = document.querySelectorAll('#gallery .item .image');
 
-        items.forEach((item) => {
-            if (this.isInView(item)) {
-                item.classList.remove('lazy');
-            }
-        });
+                items.forEach((item) => {
+                    if (this.isInView(item)) {
+                        item.classList.remove('lazy');
+                    }
+                });
             }
         }, 100);
     }
@@ -142,7 +142,13 @@ export class GalleryComponent implements OnInit {
         }
     }
 
-    getSpaceAddition() {
+    /**
+     * Calculate the number of pixels that are horizontally added to an .item div.
+     * This is done dynamically, since .item margins are set using rem.
+     * 
+     * @returns number
+     */
+    getHorizontalMargin() {
         const div = this.renderer.createElement('div');
         this.renderer.addClass(div, 'item');
         this.renderer.appendChild(this.el.nativeElement, div);
@@ -158,6 +164,11 @@ export class GalleryComponent implements OnInit {
         return outerWidth - innerWidth;
     }
 
+    /**
+     * Calculate the total width of the gallery.
+     * 
+     * @returns number
+     */
     getGalleryWidth() {
         const gallery = document.getElementById('gallery');
         const style = getComputedStyle(gallery);
@@ -165,57 +176,66 @@ export class GalleryComponent implements OnInit {
         return parseInt(style.width);
     }
 
-    async calculateGallery() {
+    /**
+     * Scale items to align in the gallery.
+     * This takes 3 steps:
+     * (1) Determine the width of all items scaled up to the largest height
+     * (2) Based on that new total width determine the factor by which to
+     *     scale down to reach the available gallery width
+     * (3) Scale down further if the maximum row height is exceeded
+     */
+    calculateGallery() {
         const galleryWidth = this.getGalleryWidth();
-        const additionalSpace = this.getSpaceAddition();
+        const horizontalMargin = this.getHorizontalMargin();
 
-        const minHeight = 500;
+        const minHeight = 300;
         const maxHeight = 550;
 
-        let imagesFinal = [];
-        let imagesForRow = [];
+        let itemsFinal = [];
+        let itemsForRow = [];
 
-        for (const img of this.items) {
+        //for (const item of this.items.filter(item => ['94f75617-0c9f-4817-8328-2da08a0430bb'].includes(item.id))) {
+        for (const item of this.items) {
             // Add image to row
-            imagesForRow.push(img);
+            itemsForRow.push(item);
 
-            const availableWidth = galleryWidth - imagesForRow.length * additionalSpace - 20;
+            // Calculate the remaining width available in the current row
+            // Subtract 20px for the scrollbar
+            const availableWidth = galleryWidth - itemsForRow.length * horizontalMargin - 20;
 
-            // Get common height
-            const allHeights = this.items.map(x => x.height);
-            const commonHeight = allHeights.reduce((acc, curr) => acc * curr);
+            // Get height of largest item
+            const largestHeight = itemsForRow.map(item => item.height).reduce((p,v) => {return p > v ? p : v});
 
-            // Get big width
-            imagesForRow.forEach(img => img.calcWidth = img.width * (commonHeight / img.height));
+            // Scale up item width to match largest height
+            itemsForRow.forEach(item => item.scaledUpWidth = item.width * (largestHeight / item.height));
 
-            // Get widths sum
-            const allWidths = imagesForRow.map(x => x.calcWidth);
-            const widthSum = allWidths.reduce((acc, curr) => acc + curr);
+            // Calculate total width of scaled up items
+            const totalScaledUpWidth = itemsForRow.map(item => item.scaledUpWidth).reduce((acc, curr) => acc + curr);
 
-            imagesForRow.forEach(img => {
-                // Get width share
-                const widthShare = img.calcWidth / widthSum;
+            // Scale down that total width to the available width
+            // But also make sure that the height does not exceed MaxHeight
+            const scale = Math.min(availableWidth / totalScaledUpWidth, maxHeight / largestHeight, 1);
 
-                // Get UI width
-                img.uiWidth = Math.floor(availableWidth * widthShare);
+            // Calculate rowHeight so we don't have to do it for each item
+            const rowHeight = largestHeight * scale;
 
-                // Get UI height
-                img.uiHeight = Math.floor(commonHeight * (img.uiWidth / img.calcWidth));
-
-                if (img.uiHeight > maxHeight) {
-                    img.uiWidth = img.uiWidth * (maxHeight / img.uiHeight);
-                    img.uiHeight = maxHeight;
-                }
+            // Set the actual widths and heights to be displayed
+            itemsForRow.forEach(item => {
+                item.uiWidth = item.scaledUpWidth * scale;
+                item.uiHeight = rowHeight;
             });
 
-            if (imagesForRow[0].uiHeight < minHeight) {
-                imagesFinal = imagesFinal.concat(imagesForRow);
+            // Once the number of items in the row is so large
+            // that the height of the row is too small,
+            // consider the row done.
+            if (rowHeight < minHeight) {
+                itemsFinal = itemsFinal.concat(itemsForRow);
 
-                imagesForRow = [];
+                itemsForRow = [];
             }
         }
 
-        this.itemsFinal = imagesFinal.concat(imagesForRow);
+        this.itemsFinal = itemsFinal.concat(itemsForRow);
         this.itemsFinal.forEach((item) => {
             item.url = `${environment.apiUrl}/item/${item.id}?w=${item.uiWidth}&h=${item.uiHeight}`;
         });
