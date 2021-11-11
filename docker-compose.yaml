@@ -1,30 +1,16 @@
 version: "3"
 services:
   server:
-    image: openphotos-server
-    container_name: openphotos-server
+    image: openphotos
+    container_name: openphotos
     restart: unless-stopped
-    build:
-      context: ./server
-      args:
-        PORT: 8081
     ports:
-      - "${SERVER_PORT}:8081"
+      - "8080:8080"
     depends_on:
       - mongo
     volumes:
-      - ./server/config:/usr/src/app/config
-      - ./server/data:/usr/src/app/data
-  client:
-    image: openphotos-client
-    container_name: openphotos-client
-    restart: unless-stopped
-    build:
-      context: ./client
-      args:
-        PORT: 8080
-    ports:
-      - "${CLIENT_PORT}:8080"
+      - /path/to/openphotos/config:/usr/src/app/config
+      - /path/to/openphotos/data:/usr/src/app/data
   mongo:
     container_name: openphotos-db
     restart: unless-stopped
