@@ -6,10 +6,10 @@ const castDebugLogger = cast.debug.CastDebugLogger.getInstance();
 const LOG_TAG = 'MyAPP.LOG';
 
 // Enable debug logger and show a 'DEBUG MODE' overlay at top left corner.
-castDebugLogger.setEnabled(true);
+castDebugLogger.setEnabled(false);
 
 // Show logs on display
-castDebugLogger.showDebugLogs(true);
+castDebugLogger.showDebugLogs(false);
 
 // Set verbosity level for Core events.
 castDebugLogger.loggerLevelByEvents = {

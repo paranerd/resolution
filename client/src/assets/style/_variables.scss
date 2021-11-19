@@ -1,0 +1,14 @@
+$theme: "dark";
+
+$primary-color: #fff;
+$secondary-color: #e8f0fe;
+$tertiary-color: #f1f1f1;
+$text-color: #5f6368;
+$accent-color: #ca358d;
+
+@if $theme == "dark" {
+  $primary-color: #292929;
+  $secondary-color: #3d3d3d;
+  $tertiary-color: #6b6b6b;
+  $text-color: #adadad;
+}

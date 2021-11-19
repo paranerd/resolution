@@ -1,6 +1,12 @@
+body {
+  --playback-logo-image: url("https://cast.thegermancoder.com/img/splash.png");
+  --logo-image: url("https://cast.thegermancoder.com/img/splash.png");
+}
+
 cast-media-player {
   --theme-hue: 100;
-  --progress-color: rgb(0, 255, 0);
-  --splash-background: white;
+  --progress-color: #ca358d;
+  --splash-background: #292929;
   --splash-size: cover;
+  --splash-image: url("https://cast.thegermancoder.com/img/splash.png");
 }

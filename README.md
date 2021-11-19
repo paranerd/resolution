@@ -1,6 +1,6 @@
-# OpenPhotos
+# Resolution
 
-Offline Photo Management
+Self-hosted Photo Management.
 
 ## Development setup
 
@@ -11,11 +11,11 @@ Offline Photo Management
 1. Clone repository
 
 ```
-git clone https://github.com/paranerd/openphotos.git
+git clone https://github.com/paranerd/resolution.git
 ```
 
 ```
-cd openphotos/
+cd resolution/
 ```
 
 1. Start server
@@ -36,7 +36,7 @@ npm run-script --prefix ./client start
 
 1. [Install Docker Compose](https://docs.docker.com/compose/install/)
 
-1. Run openphotos
+1. Run Resolution
 
 ```
 docker-compose up -d

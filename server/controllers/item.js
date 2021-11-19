@@ -172,7 +172,7 @@ router.get('/', async (req, res) => {
         // Results per page
         const pageSize = !isNaN(Number(req.query.limit)) ? Number(req.query.limit) : 100000000;
 
-        const items = await Item.aggregate(aggregation.concat([{ $skip: (page - 1) * pageSize }, { $limit: pageSize }])).allowDiskUse(true);
+        const items = await Item.aggregate(aggregation.concat([{ $skip: (page - 1) * pageSize }, { $project: { _id: 0, id: 1, height: 1, width: 1 } }, { $limit: pageSize }])).allowDiskUse(true);
 
         // Get total number of results without limit
         const count = await Item.aggregate([matchQuery, { $project: { _id: 1 } }, { $count: "total" }]);
