@@ -13,6 +13,7 @@ if (!process.env.PRODUCTION) {
 
 // Include all controllers
 router.use('/api/item', require('./item').router);
+router.use('/api/user', require('./user').router);
 
 // Serve static angular build
 router.use('/', express.static('./dist'));

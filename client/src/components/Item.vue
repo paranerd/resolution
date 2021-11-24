@@ -70,6 +70,8 @@
 </template>
 
 <script>
+import TokenService from '@/services/token';
+
 export default {
   props: ['id', 'width', 'height'],
   data() {
@@ -79,12 +81,8 @@ export default {
       lazy: true,
       lazyLoadWait: 100,
       currentLoadJobTimestamp: null,
+      url: null,
     };
-  },
-  computed: {
-    url: function () {
-      return `${process.env.VUE_APP_API_URL}/item/${this.id}?w=${this.width}&h=${this.height}`;
-    },
   },
   created() {
     document.addEventListener('scroll', this.lazyload);
@@ -95,15 +93,23 @@ export default {
   },
   methods: {
     lazyload() {
+      if (this.url) {
+        return;
+      }
+
       const loadJobTimestamp = Date.now();
       this.currentLoadJobTimestamp = loadJobTimestamp;
 
-      setTimeout(() => {
+      setTimeout(async () => {
         if (this.currentLoadJobTimestamp == loadJobTimestamp) {
           const item = this.$refs.item;
 
           if (this.isInView(item)) {
             this.lazy = false;
+
+            this.url = `${process.env.VUE_APP_API_URL}/item/${this.id}?w=${
+              this.width
+            }&h=${this.height}&token=${await TokenService.getToken()}`;
           }
         }
       }, this.lazyLoadWait);

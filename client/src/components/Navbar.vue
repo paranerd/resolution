@@ -8,7 +8,7 @@
     </div>
 
     <form id="search-form">
-      <button style="width: 50px">
+      <button class="search-icon">
         <font-awesome-icon icon="search" />
       </button>
       <input id="search" type="text" placeholder="Suchen..." />
@@ -34,12 +34,42 @@
       </button>
 
       <!-- User -->
-      <button class="navbar-button">
+      <button class="navbar-button" @click="showContext = !showContext">
         <font-awesome-icon icon="user-circle" class="fa-2x" />
+        <ContextMenu v-model:show="showContext" :actions="contextActions" />
       </button>
     </div>
   </nav>
 </template>
+
+<script>
+import ContextMenu from '@/components/ContextMenu.vue';
+import UserService from '@/services/user';
+
+export default {
+  components: {
+    ContextMenu,
+  },
+  data() {
+    return {
+      showContext: false,
+      contextActions: [
+        {
+          title: 'Logout',
+          callback: this.logout,
+          icon: 'power-off',
+        },
+      ],
+    };
+  },
+  methods: {
+    logout() {
+      UserService.logout();
+      this.$router.push('login');
+    },
+  },
+};
+</script>
 
 <style lang="scss">
 nav {
@@ -114,6 +144,10 @@ nav {
   #search-button {
     display: none;
   }
+}
+
+.search-icon {
+  width: 50px;
 }
 
 .clear-search {

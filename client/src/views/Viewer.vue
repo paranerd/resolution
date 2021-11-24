@@ -1,21 +1,13 @@
 <template>
   <!-- Image -->
   <div id="image">
-    <!-- Loading indicator -->
-    <div
-      v-if="loading"
-      style="position: absolute; width: 50%; display: flex; align-items: center"
-    >
-      <ProgressBar />
-    </div>
-
     <div
       v-if="item"
       class="item"
       :style="{
         height: item.uiHeight + 'px',
         width: item.uiWidth + 'px',
-        background: 'url(' + url,
+        backgroundImage: `url('${url}')`,
       }"
     ></div>
   </div>
@@ -45,7 +37,7 @@
         </div>
 
         <!-- Menu -->
-        <div class="item-header-button" @click="menuOpen = !menuOpen">
+        <div class="item-header-button" @click="showContext = !showContext">
           <svg
             width="24px"
             height="24px"
@@ -56,6 +48,8 @@
               d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
             ></path>
           </svg>
+
+          <ContextMenu v-model:show="showContext" :actions="contextActions" />
         </div>
       </div>
     </div>
@@ -89,47 +83,46 @@
       </div>
     </div>
 
-    <!-- Backdrop -->
-    <button
-      v-if="menuOpen"
-      @click="menuOpen = false"
-      tabindex="-1"
-      class="backdrop"
-    ></button>
-
-    <!-- Dropdown menu -->
-    <div class="dropdown" v-if="menuOpen">
-      <!-- Download -->
-      <div class="dropdown-item" @click="download()">
-        <font-awesome-icon icon="download" />
-        <span>Download</span>
-      </div>
+    <!-- Loading indicator -->
+    <div v-if="loading" class="loader-container">
+      <Loader />
     </div>
   </div>
 </template>
 
 <script>
 import Cast from '@/components/Cast.vue';
-import ProgressBar from '@/components/ProgressBar.vue';
-import axios from 'axios';
+import Loader from '@/components/Loader.vue';
+import ContextMenu from '@/components/ContextMenu.vue';
+import axios from '@/services/axios.js';
+import TokenService from '@/services/token';
 
 export default {
   name: 'Viewer',
   components: {
     Cast,
-    ProgressBar,
+    Loader,
+    ContextMenu,
   },
   data() {
     return {
       loading: false,
       id: this.$route.params.id,
-      menuOpen: false,
+      url: null,
       item: null,
       items: [],
       index: null,
       nextListener: null,
       previousListener: null,
       closeListener: null,
+      showContext: false,
+      contextActions: [
+        {
+          title: 'Download',
+          callback: this.download,
+          icon: 'download',
+        },
+      ],
     };
   },
   created() {
@@ -170,15 +163,12 @@ export default {
     dimensions: function () {
       return this.calculateImageDimensions();
     },
-    url: function () {
-      return `${process.env.VUE_APP_API_URL}/item/${this.id}?w=${this.dimensions.width}&h=${this.dimensions.height}`;
-    },
   },
   methods: {
+    download() {
+      console.log('Download placeholder.');
+    },
     async fetchItems() {
-      // Show progress indicator
-      this.loading = true;
-
       try {
         if (!this.$store.state.items.length == 0) {
           return this.$store.state.items;
@@ -186,8 +176,8 @@ export default {
           const res = await axios.get(`${process.env.VUE_APP_API_URL}/item`);
           return res.data.items.map((item) => ({
             ...item,
-            uiWidth: item.width,
-            uiHeight: item.height,
+            uiWidth: null,
+            uiHeight: null,
           }));
         }
       } catch (err) {
@@ -202,6 +192,9 @@ export default {
       }
     },
     async loadItem() {
+      // Show progress indicator
+      this.loading = true;
+
       if (this.items.length === 0) {
         this.items = await this.fetchItems();
       }
@@ -212,7 +205,12 @@ export default {
       const dimensions = this.calculateImageDimensions();
       this.item.uiHeight = dimensions.height;
       this.item.uiWidth = dimensions.width;
-      this.item.url = `${process.env.VUE_APP_API_URL}/item/${this.item.id}?w=${this.item.uiWidth}&h=${this.item.uiHeight}`;
+
+      this.url = `${process.env.VUE_APP_API_URL}/item/${this.id}?w=${
+        this.item.uiWidth
+      }&h=${this.item.uiHeight}&token=${await TokenService.getToken()}`;
+
+      this.loading = false;
     },
     previous() {
       if (this.index === 0) {
@@ -272,7 +270,7 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 #controls {
   display: flex;
   flex-direction: column;
@@ -380,52 +378,9 @@ export default {
   }
 }
 
-#spinner {
+.loader-container {
   position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.dropdown {
-  position: absolute;
-  padding: 0.25rem 0;
-  right: 0;
-  margin-top: 0.5rem;
-  width: 12rem;
-  border-radius: 0.25rem;
-  color: $text-color;
-  background: $secondary-color;
-}
-
-.dropdown-item {
-  padding: 1rem 1rem;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-
-  &:hover {
-    background: $tertiary-color;
-  }
-
-  & span {
-    margin-left: 1rem;
-  }
-}
-
-.backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 100%;
-  width: 100%;
-  cursor: default;
+  right: 2rem;
+  bottom: 2rem;
 }
 </style>

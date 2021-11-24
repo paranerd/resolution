@@ -11,14 +11,24 @@ import {
   faUserCircle,
   faGem,
   faDownload,
+  faPowerOff,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 // Importing global css files
 import '@/assets/style/normalize.css';
-import '@/assets/style/reset.css';
+import '@/assets/style/reset.scss';
+import '@/assets/style/responsive.scss';
 
-library.add(faPlay, faSearch, faTimes, faUserCircle, faGem, faDownload);
+library.add(
+  faPlay,
+  faSearch,
+  faTimes,
+  faUserCircle,
+  faGem,
+  faDownload,
+  faPowerOff
+);
 
 createApp(App)
   .use(router)

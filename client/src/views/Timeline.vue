@@ -14,7 +14,7 @@
 <script>
 import Navbar from '@/components/Navbar.vue';
 import Item from '@/components/Item.vue';
-import axios from 'axios';
+import axios from '@/services/axios.js';
 
 export default {
   name: 'Timeline',
@@ -36,6 +36,7 @@ export default {
   },
   created() {
     this.fetchItems(true);
+    //axios.get('/user/refresh');
   },
   mounted() {
     this.$nextTick(function () {

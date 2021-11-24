@@ -1,4 +1,3 @@
-const express = require('express');
 const sharp = require('sharp');
 const sizeOf = require('image-size');
 const archiver = require('archiver');
@@ -10,15 +9,8 @@ const ExifImage = require('exif').ExifImage;
 const Item = require('../models/item');
 const Errors = require('../util/errors');
 
-const router = express.Router();
-
 // Temp path for zip files while downloading
 const TMP_PATH = path.join(__dirname, '..', 'tmp');
-
-router.get('/scan', async (req, res) => {
-    const count = await scan(process.env.MEDIA_DIR);
-    res.send(`Scanned ${count} item(s).`);
-});
 
 /**
  * Read EXIF data.
@@ -42,13 +34,19 @@ async function readExif(filePath) {
         }
     });
 }
+
+async function scan(req, res) {
+  const count = await scanRecursive(process.env.MEDIA_DIR);
+  res.send(`Scanned ${count} item(s).`);
+}
+
 /**
  * Recursively scan path for images and store to database.
  * 
  * @param {string} currentPath 
  * @returns {number}
  */
-async function scan(currentPath) {
+async function scanRecursive(currentPath) {
     const files = fs.readdirSync(currentPath);
     let count = 0;
 
@@ -95,7 +93,7 @@ async function scan(currentPath) {
     return count;
 }
 
-router.get('/download', async (req, res) => {
+async function download(req, res) {
     const ids = req.query.ids;
 
     const items = await Item.find({ id: { $in: ids } });
@@ -129,9 +127,9 @@ router.get('/download', async (req, res) => {
             fs.unlinkSync(downloadPath);
         }
     });
-});
+}
 
-router.get('/:id', async (req, res) => {
+async function getOne(req, res) {
     try {
         const item = await Item.findOne({ id: req.params.id });
 
@@ -152,60 +150,60 @@ router.get('/:id', async (req, res) => {
         const status = err.status ? err.status : 500;
         res.status(status).json({ 'error': err.message });
     }
-});
+}
 
-router.get('/', async (req, res) => {
-    try {
-        const query = {};
+async function getAll(req, res) {
+  try {
+    const query = {};
 
-        if (req.query.id) {
-            query.id = req.query.id;
-        }
-
-        const matchQuery = { $match: query };
-
-        const aggregation = [matchQuery];
-
-        // Get current page
-        const page = (req.query.page && req.query.page > 0) ? parseInt(req.query.page) : 1;
-
-        // Results per page
-        const pageSize = !isNaN(Number(req.query.limit)) ? Number(req.query.limit) : 100000000;
-
-        const items = await Item.aggregate(aggregation.concat([{ $skip: (page - 1) * pageSize }, { $project: { _id: 0, id: 1, height: 1, width: 1 } }, { $limit: pageSize }])).allowDiskUse(true);
-
-        // Get total number of results without limit
-        const count = await Item.aggregate([matchQuery, { $project: { _id: 1 } }, { $count: "total" }]);
-        const total = count.length ? count[0]['total'] : 0;
-
-        // Set pages
-        const pages = pageSize > 0 ? Math.ceil(total / pageSize) : 0;
-
-        res.json({
-            items,
-            page,
-            pageSize,
-            pages,
-            total,
-        });
-    } catch (err) {
-        console.error(err);
-        const status = err.status ? err.status : 500;
-        res.status(status).send(err.message);
+    if (req.query.id) {
+      query.id = req.query.id;
     }
-});
+
+    const matchQuery = { $match: query };
+
+    const aggregation = [matchQuery];
+
+    // Get current page
+    const page = (req.query.page && req.query.page > 0) ? parseInt(req.query.page) : 1;
+
+    // Results per page
+    const pageSize = !isNaN(Number(req.query.limit)) ? Number(req.query.limit) : 100000000;
+
+    const items = await Item.aggregate(aggregation.concat([{ $skip: (page - 1) * pageSize }, { $project: { _id: 0, id: 1, height: 1, width: 1 } }, { $limit: pageSize }])).allowDiskUse(true);
+
+    // Get total number of results without limit
+    const count = await Item.aggregate([matchQuery, { $project: { _id: 1 } }, { $count: "total" }]);
+    const total = count.length ? count[0]['total'] : 0;
+
+    // Set pages
+    const pages = pageSize > 0 ? Math.ceil(total / pageSize) : 0;
+
+    res.json({
+      items,
+      page,
+      pageSize,
+      pages,
+      total,
+    });
+  } catch (err) {
+    console.error(err);
+    const status = err.status ? err.status : 500;
+    res.status(status).send(err.message);
+  }
+}
 
 function getTimestring() {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = ("0" + date.getMonth()).slice(-2);
-    const day = ("0" + date.getDate()).slice(-2);
-    const hours = ("0" + date.getHours()).slice(-2);
-    const minutes = ("0" + date.getMinutes()).slice(-2);
-    const seconds = ("0" + date.getSeconds()).slice(-2);
-    const millis = date.getMilliseconds();
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = ("0" + date.getMonth()).slice(-2);
+  const day = ("0" + date.getDate()).slice(-2);
+  const hours = ("0" + date.getHours()).slice(-2);
+  const minutes = ("0" + date.getMinutes()).slice(-2);
+  const seconds = ("0" + date.getSeconds()).slice(-2);
+  const millis = date.getMilliseconds();
 
-    return year + "-" + month + "-" + day + "_" + hours + "" + minutes + "" + seconds + "." + millis;
+  return year + "-" + month + "-" + day + "_" + hours + "" + minutes + "" + seconds + "." + millis;
 }
 
 /**
@@ -278,5 +276,8 @@ function resize(imagePath, width, height) {
 }
 
 module.exports = {
-    router
+    scan,
+    getAll,
+    getOne,
+    download,
 };
