@@ -20,6 +20,21 @@ function authGuard(to, from, next) {
   }
 }
 
+/**
+ * Navigation guard to redirect away from login if logged in.
+ *
+ * @param to
+ * @param from
+ * @param next
+ */
+function doubleLoginGuard(to, from, next) {
+  if (TokenService.getRefreshToken()) {
+    next('/');
+  } else {
+    next();
+  }
+}
+
 const routes = [
   {
     path: '/',
@@ -46,6 +61,7 @@ const routes = [
     meta: {
       title: 'Login',
     },
+    beforeEnter: doubleLoginGuard,
   },
   {
     path: '/setup',
