@@ -23,5 +23,13 @@
         "mongoose": "^5.11.9",
         "sharp": "^0.26.3",
         "uuid": "^8.3.2"
+    },
+    "devDependencies": {
+        "eslint": "^8.3.0",
+        "eslint-config-airbnb-base": "^15.0.0",
+        "eslint-config-prettier": "^8.3.0",
+        "eslint-plugin-import": "^2.25.3",
+        "eslint-plugin-prettier": "^4.0.0",
+        "prettier": "^2.5.0"
     }
 }
