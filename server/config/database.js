@@ -11,7 +11,10 @@ const connectionParams = {
   useCreateIndex: true,
 };
 
-async function connectWithRetry() {
+/**
+ * Connect to MongoDB with retry.
+ */
+async function connect() {
   try {
     await mongoose.connect(connectionString, connectionParams);
     console.log('MongoDB connected');
@@ -24,4 +27,6 @@ async function connectWithRetry() {
   }
 }
 
-connectWithRetry();
+module.exports = {
+  connect,
+}
