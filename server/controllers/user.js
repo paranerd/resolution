@@ -20,7 +20,8 @@ async function setup(req, res) {
   const userCount = await User.countDocuments();
 
   if (userCount) {
-    res.status(400).json({ msg: 'Already set up' });
+    res.status(403).json({ msg: 'Already set up' });
+    return;
   }
 
   try {
