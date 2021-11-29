@@ -4,7 +4,7 @@ const User = require('../models/user');
 const app = require('../app');
 
 // Connect to MongoDB
-require('./config/database').connect();
+require('../config/database').connect();
 
 const username = 'admin';
 const password = 'password';
@@ -72,6 +72,16 @@ describe('User routes', () => {
     expect(res.body).toHaveProperty('refreshToken');
 
     refreshToken = res.body.refreshToken;
+  });
+
+  it('Should obtain new refresh token', async () => {
+    const res = await request(app)
+      .post('/api/user/refresh')
+      .set('Authorization', `Bearer ${refreshToken}`);
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty('token');
+      expect(res.body).toHaveProperty('refreshToken');
   });
 
   it('Should remove refreshToken from db on logout', async () => {
