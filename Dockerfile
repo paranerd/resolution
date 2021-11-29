@@ -8,7 +8,7 @@ RUN npm run build
 # Build server and move Angular to /dist
 FROM node:12 AS server-build
 WORKDIR /app
-COPY --from=ui-build /app/dist/openphotos ./dist
+COPY --from=ui-build /app/dist/resolution ./dist
 COPY server/ ./
 RUN npm install
 
@@ -21,4 +21,4 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Start server
-CMD ["node", "server.js"]
+CMD ["node", "index.js"]
