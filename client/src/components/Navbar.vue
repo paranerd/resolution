@@ -74,7 +74,7 @@ export default {
       this.$router.push('login');
     },
     async scan() {
-      await axios.post(`${process.env.VUE_APP_API_URL}/item/scan`);
+      await axios.post(`/item/scan`);
     },
   },
 };
