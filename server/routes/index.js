@@ -17,18 +17,19 @@ router.use(cookieParser());
 
 // Set CORS headers
 if (!process.env.PRODUCTION) {
-  router.use(cors());
+  router.use(cors({ exposedHeaders: 'Content-Disposition' }));
 }
 
 // Item routes
-router.get('/api/item/:id', auth.isAuthenticated(), itemController.getOne);
-router.get('/api/item', auth.isAuthenticated(), itemController.getAll);
 router.get(
   '/api/item/download',
   auth.isAuthenticated(),
   itemController.download
 );
-router.get('/api/item/scan', auth.isAuthenticated(), itemController.scan);
+router.post('/api/item/scan', auth.isAuthenticated(), itemController.scan);
+router.get('/api/item/:id', auth.isAuthenticated(), itemController.getOne);
+router.delete('/api/item', auth.isAuthenticated(), itemController.remove);
+router.get('/api/item', auth.isAuthenticated(), itemController.getAll);
 
 // User routes
 router.post('/api/user/setup', userController.setup);

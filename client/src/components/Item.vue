@@ -76,7 +76,6 @@ export default {
   props: ['id', 'width', 'height'],
   data() {
     return {
-      selected: false,
       selectedCount: 0,
       lazy: true,
       lazyLoadWait: 100,
@@ -84,35 +83,29 @@ export default {
       url: null,
     };
   },
-  created() {
-    document.addEventListener('scroll', this.lazyload);
+  mounted() {
     this.lazyload();
   },
-  unmounted() {
-    document.removeEventListener('scroll', this.lazyload);
+  computed: {
+    selected() {
+      return this.$store.state.selected.includes(this.id);
+    },
   },
   methods: {
-    lazyload() {
+    async lazyload() {
       if (this.url) {
         return;
       }
 
-      const loadJobTimestamp = Date.now();
-      this.currentLoadJobTimestamp = loadJobTimestamp;
+      const item = this.$refs.item;
 
-      setTimeout(async () => {
-        if (this.currentLoadJobTimestamp == loadJobTimestamp) {
-          const item = this.$refs.item;
+      if (this.isInView(item)) {
+        this.lazy = false;
 
-          if (this.isInView(item)) {
-            this.lazy = false;
-
-            this.url = `${process.env.VUE_APP_API_URL}/item/${this.id}?w=${
-              this.width
-            }&h=${this.height}&token=${await TokenService.getToken()}`;
-          }
-        }
-      }, this.lazyLoadWait);
+        this.url = `${process.env.VUE_APP_API_URL}/item/${this.id}?w=${
+          this.width
+        }&h=${this.height}&token=${await TokenService.getToken()}`;
+      }
     },
     isInView(elem) {
       const viewportOffset = elem.getBoundingClientRect();
@@ -122,13 +115,17 @@ export default {
       );
     },
     select() {
-      this.selected = true;
+      this.$store.commit('select', this.id);
     },
     unselect() {
-      this.selected = false;
+      this.$store.commit('unselect', this.id);
     },
     toggleSelect() {
-      this.selected = !this.selected;
+      if (this.selected) {
+        this.unselect();
+      } else {
+        this.select();
+      }
     },
     handleItemClick() {
       if (this.selected) {
@@ -140,7 +137,7 @@ export default {
       }
     },
     countSelected() {
-      return document.querySelectorAll('.item.selected').length;
+      return this.$store.state.selected.length;
     },
   },
 };
@@ -154,10 +151,15 @@ export default {
   height: 100px;
   transition: transform 0.2s ease;
   cursor: pointer;
+  background-size: cover;
+  background: $secondary-color;
+
+  .selected {
+    background: none;
+  }
 
   &.lazy {
     .image {
-      background: $secondary-color;
       background-image: none !important;
     }
   }
@@ -192,8 +194,7 @@ export default {
   background-repeat: no-repeat;
 }
 
-.item.selected .image,
-.item.selected .item-overlay {
+.item.selected .image {
   transform: scale(0.95);
 }
 
@@ -223,7 +224,7 @@ export default {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   transition: transform 0.25s;
   display: none;
 }

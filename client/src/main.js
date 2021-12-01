@@ -12,6 +12,9 @@ import {
   faGem,
   faDownload,
   faPowerOff,
+  faGhost,
+  faSyncAlt,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
@@ -27,7 +30,10 @@ library.add(
   faUserCircle,
   faGem,
   faDownload,
-  faPowerOff
+  faPowerOff,
+  faGhost,
+  faSyncAlt,
+  faTrash
 );
 
 createApp(App)

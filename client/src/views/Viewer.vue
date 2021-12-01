@@ -84,7 +84,7 @@
     </div>
 
     <!-- Loading indicator -->
-    <div v-if="loading" class="loader-container">
+    <div v-if="loading > 0" class="loader-container">
       <Loader />
     </div>
   </div>
@@ -94,7 +94,7 @@
 import Cast from '@/components/Cast.vue';
 import Loader from '@/components/Loader.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
-import axios from '@/services/axios.js';
+import ItemService from '@/services/item';
 import TokenService from '@/services/token';
 
 export default {
@@ -106,7 +106,7 @@ export default {
   },
   data() {
     return {
-      loading: false,
+      loading: 0,
       id: this.$route.params.id,
       url: null,
       item: null,
@@ -169,17 +169,10 @@ export default {
       console.log('Download placeholder.');
     },
     async fetchItems() {
+      this.loading += 1;
+
       try {
-        if (!this.$store.state.items.length == 0) {
-          return this.$store.state.items;
-        } else {
-          const res = await axios.get(`${process.env.VUE_APP_API_URL}/item`);
-          return res.data.items.map((item) => ({
-            ...item,
-            uiWidth: null,
-            uiHeight: null,
-          }));
-        }
+        return await ItemService.getAll();
       } catch (err) {
         console.error(err);
         this.error =
@@ -188,12 +181,12 @@ export default {
             : 'Something went wrong...';
         this.totalResults = 0;
       } finally {
-        this.loading = false;
+        this.loading -= 1;
       }
     },
     async loadItem() {
       // Show progress indicator
-      this.loading = true;
+      this.loading += 1;
 
       if (this.items.length === 0) {
         this.items = await this.fetchItems();
@@ -210,7 +203,7 @@ export default {
         this.item.uiWidth
       }&h=${this.item.uiHeight}&token=${await TokenService.getToken()}`;
 
-      this.loading = false;
+      this.loading -= 1;
     },
     previous() {
       if (this.index === 0) {
@@ -262,8 +255,8 @@ export default {
       }
 
       return {
-        width: calculatedWidth,
-        height: calculatedHeight,
+        width: Math.ceil(calculatedWidth),
+        height: Math.ceil(calculatedHeight),
       };
     },
   },

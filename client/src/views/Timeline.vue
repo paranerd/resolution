@@ -1,26 +1,36 @@
 <template>
-  <Navbar />
-  <div id="timeline">
-    <Item
-      v-for="item in itemsFinal"
-      :key="item.id"
-      :id="item.id"
-      :width="item.uiWidth"
-      :height="item.uiHeight"
-    />
+  <div class="wrapper">
+    <Navbar />
+    <div id="timeline" ref="timeline">
+      <div class="no-items" v-if="items.length === 0">
+        <span>Nothing to display</span>
+        <font-awesome-icon icon="ghost" />
+      </div>
+      <Item
+        v-for="item in itemsFinal"
+        :key="item.id"
+        :id="item.id"
+        :width="item.uiWidth"
+        :height="item.uiHeight"
+        :ref="setItemRef"
+      />
+    </div>
   </div>
+  <ItemActions />
 </template>
 
 <script>
 import Navbar from '@/components/Navbar.vue';
+import ItemActions from '@/components/ItemActions.vue';
 import Item from '@/components/Item.vue';
-import axios from '@/services/axios.js';
+import ItemService from '@/services/item';
 
 export default {
   name: 'Timeline',
   components: {
     Item,
     Navbar,
+    ItemActions,
   },
   data() {
     return {
@@ -29,21 +39,42 @@ export default {
       error: null,
       totalResults: 0,
       loading: false,
-      currentLoadJobTimestamp: null,
       selectedCount: 0,
       latestResizeTimestamp: 0,
+      lazyLoadWait: 100,
+      currentLoadJobTimestamp: null,
+      itemRefs: [],
     };
   },
-  created() {
-    this.fetchItems(true);
-    //axios.get('/user/refresh');
+  async created() {
+    this.items = await this.fetchItems();
+    this.calculateGallery();
   },
   mounted() {
     this.$nextTick(function () {
       window.addEventListener('resize', this.handleResize);
+      this.$refs.timeline.addEventListener('scroll', this.lazyload);
     });
   },
+  beforeUnmount() {
+    this.$refs.timeline.removeEventListener('scroll', this.lazyload);
+  },
   methods: {
+    setItemRef(el) {
+      if (el) {
+        this.itemRefs.push(el);
+      }
+    },
+    lazyload() {
+      const loadJobTimestamp = Date.now();
+      this.currentLoadJobTimestamp = loadJobTimestamp;
+
+      setTimeout(async () => {
+        if (this.currentLoadJobTimestamp == loadJobTimestamp) {
+          this.itemRefs.forEach((item) => item.lazyload());
+        }
+      }, this.lazyLoadWait);
+    },
     handleResize() {
       const resizeTimestamp = Date.now();
       this.latestResizeTimestamp = resizeTimestamp;
@@ -54,7 +85,7 @@ export default {
         }
       }, 100);
     },
-    async fetchItems(force) {
+    async fetchItems() {
       // Reset
       this.error = '';
 
@@ -62,19 +93,7 @@ export default {
       this.loading = true;
 
       try {
-        if (!force) {
-          this.items = []; //this.stateService.items;
-        } else {
-          const res = await axios.get(`${process.env.VUE_APP_API_URL}/item`);
-          this.items = res.data.items.map((item) => ({
-            ...item,
-            uiWidth: 0,
-            uiHeight: 0,
-          }));
-          this.$store.commit('setItems', this.items);
-        }
-
-        this.calculateGallery();
+        return await ItemService.getAll();
       } catch (err) {
         console.error(err);
         this.error =
@@ -176,8 +195,8 @@ export default {
 
         // Set the actual widths and heights to be displayed
         itemsForRow.forEach((item) => {
-          item.uiWidth = item.scaledUpWidth * scale;
-          item.uiHeight = rowHeight;
+          item.uiWidth = Math.ceil(item.scaledUpWidth * scale);
+          item.uiHeight = Math.ceil(rowHeight);
         });
 
         // Once the number of items in the row is so large
@@ -191,40 +210,39 @@ export default {
       }
 
       this.itemsFinal = itemsFinal.concat(itemsForRow);
-      /*this.itemsFinal.forEach((item) => {
-        item.url = `${environment.apiUrl}/item/${item.id}?w=${item.uiWidth}&h=${item.uiHeight}`;
-      });*/
-
-      setTimeout(() => {
-        this.lazyload();
-      }, 100);
-    },
-    lazyload() {
-      const loadJobTimestamp = Date.now();
-      this.currentLoadJobTimestamp = loadJobTimestamp;
-
-      setTimeout(() => {
-        if (this.currentLoadJobTimestamp == loadJobTimestamp) {
-          const items = document.querySelectorAll('#gallery .item .image');
-
-          items.forEach((item) => {
-            if (this.isInView(item)) {
-              item.classList.remove('lazy');
-            }
-          });
-        }
-      }, 100);
     },
   },
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
 #timeline {
+  overflow: auto;
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
   flex-wrap: wrap;
   flex: 1;
+}
+
+.no-items {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: $text-color;
+  font-family: roboto-500;
+  font-size: 2rem;
+
+  span {
+    margin-right: 1rem;
+  }
 }
 </style>

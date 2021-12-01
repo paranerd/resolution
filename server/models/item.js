@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
 const uuid = require('uuid');
 
+let Item;
+
 const ItemSchema = new mongoose.Schema({
-  id: String,
-  title: { type: String, default: '' },
-  created: { type: Number, default: Date.now() },
-  modified: { type: Number, default: Date.now() },
+  id: { type: String, required: true, default: uuid.v4 },
+  filename: { type: String, required: true },
+  uploaded: { type: Number, default: Date.now },
   path: { type: String, required: true },
   height: { type: Number, required: true },
   width: { type: Number, required: true },
@@ -15,13 +16,13 @@ const ItemSchema = new mongoose.Schema({
   },
 });
 
-const Item = mongoose.model('Item', ItemSchema);
-
-ItemSchema.pre('save', () => {
-  this.id = this.id || uuid.v4();
-  this.modified = this.modified || this.created;
-});
-
+/**
+ * Return Item; create if not exists.
+ *
+ * @param {*} query
+ * @param {*} data
+ * @returns {Item}
+ */
 ItemSchema.statics.findOrCreate = async (query, data) => {
   const content = data || query;
 
@@ -30,4 +31,27 @@ ItemSchema.statics.findOrCreate = async (query, data) => {
   return item || new Item(content).save();
 };
 
+/**
+ * Create item or update existing one.
+ * Not using findOneAndUpdate() for lack of validation.
+ *
+ * @param {*} query
+ * @param {*} data
+ * @returns {Item}
+ */
+ItemSchema.statics.updateOrCreate = async (query, data) => {
+  const content = { ...data, ...query };
+
+  const item = await Item.findOne(query);
+
+  if (!item) {
+    return new Item(content).save();
+  }
+
+  Object.assign(item, data);
+
+  return item.save();
+};
+
+Item = mongoose.model('Item', ItemSchema);
 module.exports = Item;

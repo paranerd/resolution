@@ -44,53 +44,65 @@ async function scanRecursive(currentPath) {
   const files = fs.readdirSync(currentPath);
   let count = 0;
 
-  files.forEach(async (file) => {
-    const absPath = path.join(currentPath, file);
+  /* eslint-disable no-await-in-loop */
+  for (let i = 0; i < files.length; i += 1) {
+    const filename = files[i];
+    const absPath = path.join(currentPath, filename);
 
     if (fs.lstatSync(absPath).isDirectory()) {
       await scanRecursive(absPath);
-      return;
     }
 
     // Only handle images
-    if (!mime.lookup(absPath).startsWith('image/')) {
-      return;
+    if (mime.lookup(absPath).startsWith('image/')) {
+      // Get image dimensions
+      const dimensions = sizeOf(absPath);
+
+      // Check if image is rotated (to switch width and height)
+      const rotated = [6, 8].includes(dimensions.orientation);
+
+      // Read EXIF data (JPEG only)
+      let exif = null;
+      try {
+        exif = await readExif(absPath);
+      } catch (err) {
+        if (!['NO_EXIF_SEGMENT', 'NOT_A_JPEG'].includes(err.code)) {
+          console.error(err);
+        }
+      }
+
+      await Item.updateOrCreate(
+        { path: absPath },
+        {
+          filename,
+          height: rotated ? dimensions.width : dimensions.height,
+          width: rotated ? dimensions.height : dimensions.width,
+          orientation: dimensions.orientation || 1,
+          exif: {
+            dateTimeOriginal: exif?.exif?.DateTimeOriginal || null,
+          },
+        }
+      );
+
+      count += 1;
     }
-
-    // Get image dimensions
-    const dimensions = sizeOf(absPath);
-
-    // Check if image is rotated (to switch width and height)
-    const rotated = [6, 8].includes(dimensions.orientation);
-
-    // Read EXIF data (JPEG only)
-    let exif = null;
-    try {
-      exif = await readExif(absPath);
-    } catch (err) {
-      console.error(err);
-    }
-
-    await Item.findOrCreate({
-      title: file,
-      path: absPath,
-      height: rotated ? dimensions.width : dimensions.height,
-      width: rotated ? dimensions.height : dimensions.width,
-      orientation: dimensions.orientation || 1,
-      exif: {
-        dateTimeOriginal: exif?.exif?.DateTimeOriginal,
-      },
-    });
-
-    count += 1;
-  });
+  }
+  /* eslint-enable no-await-in-loop */
 
   return count;
 }
 
 async function scan(req, res) {
-  const count = await scanRecursive(process.env.MEDIA_DIR);
-  res.send(`Scanned ${count} item(s).`);
+  try {
+    const count = await scanRecursive(process.env.MEDIA_DIR);
+
+    console.log(`Scanned ${count} item(s)`);
+
+    res.status(200).json({ msg: count });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: 'Error scanning media' });
+  }
 }
 
 function getTimestring() {
@@ -119,7 +131,7 @@ async function zip(items) {
     }
 
     // Determine output path
-    const outputFilename = `${getTimestring()}.zip`;
+    const outputFilename = `resolution-${getTimestring()}.zip`;
     const outputPath = path.join(TMP_PATH, outputFilename);
 
     // Open output as stream
@@ -178,14 +190,30 @@ async function download(req, res) {
   res.download(downloadPath, (err) => {
     if (err) {
       console.error('Error downloading:', err);
-    } else {
-      console.log('Downloaded', downloadPath);
     }
 
     if (removeAfterDownload) {
       fs.unlinkSync(downloadPath);
     }
   });
+}
+
+async function remove(req, res) {
+  const { ids } = req.body;
+
+  const items = await Item.find({ id: { $in: ids } });
+
+  /* eslint-disable no-await-in-loop */
+  for (let i = 0; i < items.length; i += 1) {
+    const item = items[i];
+
+    fs.unlinkSync(item.path);
+
+    await Item.deleteOne(item);
+  }
+  /* eslint-disable no-await-in-loop */
+
+  res.sendStatus(200);
 }
 
 /**
@@ -225,7 +253,7 @@ async function getOne(req, res) {
     const width = parseInt(req.query.w, 10) || item.width;
     const height = parseInt(req.query.h, 10) || item.height;
 
-    res.type('image/jpeg');
+    res.type(mime.lookup(item.path));
 
     // Get the resized image
     resize(item.path, width, height).pipe(res);
@@ -295,4 +323,5 @@ module.exports = {
   getAll,
   getOne,
   download,
+  remove,
 };
