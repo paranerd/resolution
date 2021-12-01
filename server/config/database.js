@@ -23,10 +23,10 @@ async function connect() {
       `Failed to connect to mongo on startup - retrying in ${SECONDS_BETWEEN_RETRIES}s`,
       err
     );
-    setTimeout(connectWithRetry, SECONDS_BETWEEN_RETRIES * 1000);
+    setTimeout(connect, SECONDS_BETWEEN_RETRIES * 1000);
   }
 }
 
 module.exports = {
   connect,
-}
+};
