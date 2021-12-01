@@ -3,11 +3,15 @@
 </template>
 
 <script>
+import TokenService from '@/services/token';
+
 export default {
   props: ['id'],
   data() {
     return {
-      host: `${window.location.protocol}//${window.location.host}`,
+      host: process.env.VUE_APP_API_URL.startsWith('http')
+        ? ''
+        : `${window.location.protocol}//${window.location.host}`,
     };
   },
   watch: {
@@ -30,6 +34,8 @@ export default {
         'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1'
       );
     }
+
+    this.load(this.id);
   },
   methods: {
     initializeCastApi() {
@@ -73,7 +79,9 @@ export default {
         return;
       }
 
-      const currentMediaURL = `${this.host}${process.env.VUE_APP_API_URL}/item/${id}`;
+      const currentMediaURL = `${this.host}${
+        process.env.VUE_APP_API_URL
+      }/item/${id}?token=${await TokenService.getToken()}`;
       const contentType = 'image/jpeg';
       const mediaInfo = new window.chrome.cast.media.MediaInfo(
         currentMediaURL,
@@ -113,8 +121,7 @@ export default {
 google-cast-launcher {
   width: 24px;
   height: 24px;
-  display: block;
-  --connected-color: $accent-color;
-  --disconnectec-color: $secondary-color;
+  --connected-color: #ca358d;
+  --disconnected-color: #3d3d3d;
 }
 </style>
