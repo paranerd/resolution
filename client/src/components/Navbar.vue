@@ -36,7 +36,7 @@
       <!-- User -->
       <button class="navbar-button" @click="showContext = !showContext">
         <font-awesome-icon icon="user-circle" class="fa-2x" />
-        <ContextMenu v-model:show="showContext" :actions="contextActions" />
+        <ContextMenu :show="showContext" :actions="contextActions" />
       </button>
     </div>
   </nav>
@@ -45,6 +45,7 @@
 <script>
 import ContextMenu from '@/components/ContextMenu.vue';
 import UserService from '@/services/user';
+import axios from '@/services/axios.js';
 
 export default {
   components: {
@@ -54,6 +55,11 @@ export default {
     return {
       showContext: false,
       contextActions: [
+        {
+          title: 'Refresh Media',
+          callback: this.scan,
+          icon: 'sync-alt',
+        },
         {
           title: 'Logout',
           callback: this.logout,
@@ -67,14 +73,17 @@ export default {
       UserService.logout();
       this.$router.push('login');
     },
+    async scan() {
+      await axios.post(`${process.env.VUE_APP_API_URL}/item/scan`);
+    },
   },
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 nav {
   width: 100%;
-  height: 4rem;
+  height: $navbar-height;
   padding: 0.25rem;
   padding: 0 12px;
   display: flex;
