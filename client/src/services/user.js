@@ -6,11 +6,13 @@ class UserService {
    * Remove access token both locally and remotely.
    */
   async logout() {
-    // Remove refresh token from server
-    await axios.post('/user/logout');
-
-    // Remove tokens locally
-    TokenService.removeToken();
+    try {
+      // Remove refresh token from server
+      await axios.post('/user/logout');
+    } finally {
+      // Remove tokens locally
+      TokenService.removeToken();
+    }
   }
 
   /**
