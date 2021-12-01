@@ -72,6 +72,7 @@ export default {
       } catch (err) {
         if (err.response.status == 403) {
           this.error = 'Invalid username or password';
+          this.password = '';
         }
       }
     },
