@@ -5,16 +5,12 @@ const uuid = require('uuid');
 const saltRounds = 10;
 
 const UserSchema = new mongoose.Schema({
-  id: String,
+  id: { type: String, required: true, default: uuid.v4 },
   username: String,
   password: String,
   token: String,
   refreshToken: [String],
   isAdmin: { type: Boolean, default: false },
-});
-
-UserSchema.pre('save', () => {
-  this.id = this.id || uuid.v4();
 });
 
 /**
@@ -25,7 +21,7 @@ UserSchema.pre('save', () => {
  */
 UserSchema.statics.hashPassword = async function hasher(password) {
   return bcrypt.hash(password, saltRounds);
-}
+};
 
 /**
  * Validate password
@@ -39,7 +35,7 @@ UserSchema.methods.validatePassword = async function validator(password) {
   }
 
   return bcrypt.compare(password, this.password);
-}
+};
 
 // Create a model from the schema and make it publicly available
 const User = mongoose.model('User', UserSchema);
