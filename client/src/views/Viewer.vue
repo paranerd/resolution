@@ -166,7 +166,7 @@ export default {
   },
   methods: {
     download() {
-      console.log('Download placeholder.');
+      ItemService.download([this.id]);
     },
     async fetchItems() {
       this.loading += 1;
