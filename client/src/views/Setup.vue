@@ -16,6 +16,7 @@
           autocomplete="off"
           name="username"
           required
+          autofocus
         />
         <span class="focus-border"></span>
       </div>
@@ -30,7 +31,6 @@
           autocomplete="off"
           name="password1"
           required
-          autofocus
         />
         <span class="focus-border"></span>
       </div>
