@@ -1,11 +1,6 @@
 <template>
   <!-- Backdrop -->
-  <!--<button
-    v-if="show"
-    @click="close"
-    tabindex="-1"
-    class="backdrop"
-  ></button>-->
+  <button v-if="show" @click="close" tabindex="-1" class="backdrop"></button>
 
   <!-- Dropdown menu -->
   <div class="dropdown" v-if="show">
@@ -33,7 +28,7 @@ export default {
   created() {
     this.escapeListener = document.addEventListener('keydown', (e) => {
       if (e.key == 'Escape') {
-        this.menuOpen = false;
+        this.$emit('update:show', false);
       }
     });
   },
@@ -58,7 +53,7 @@ export default {
   border-radius: 0.25rem;
   color: $text-color;
   background: $secondary-color;
-  z-index: 1;
+  z-index: 2;
 }
 
 .dropdown-item {
@@ -86,5 +81,6 @@ export default {
   height: 100%;
   width: 100%;
   cursor: default;
+  z-index: 1;
 }
 </style>
