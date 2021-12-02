@@ -35,6 +35,44 @@ async function readExif(filePath) {
 }
 
 /**
+ * Import file into database
+ *
+ * @param {string} absPath
+ * @returns {Item}
+ */
+async function importFile(absPath) {
+  // Only handle images
+  // Get image dimensions
+  const dimensions = sizeOf(absPath);
+
+  // Check if image is rotated (to switch width and height)
+  const rotated = [6, 8].includes(dimensions.orientation);
+
+  // Read EXIF data (JPEG only)
+  let exif = null;
+  try {
+    exif = await readExif(absPath);
+  } catch (err) {
+    if (!['NO_EXIF_SEGMENT', 'NOT_A_JPEG'].includes(err.code)) {
+      console.error(err);
+    }
+  }
+
+  return Item.updateOrCreate(
+    { path: absPath },
+    {
+      filename: path.basename(absPath),
+      height: rotated ? dimensions.width : dimensions.height,
+      width: rotated ? dimensions.height : dimensions.width,
+      orientation: dimensions.orientation || 1,
+      exif: {
+        dateTimeOriginal: exif?.exif?.DateTimeOriginal || null,
+      },
+    }
+  );
+}
+
+/**
  * Recursively scan path for images and store to database.
  *
  * @param {string} currentPath
@@ -50,39 +88,9 @@ async function scanRecursive(currentPath) {
     const absPath = path.join(currentPath, filename);
 
     if (fs.lstatSync(absPath).isDirectory()) {
-      await scanRecursive(absPath);
-    }
-
-    // Only handle images
-    if (mime.lookup(absPath).startsWith('image/')) {
-      // Get image dimensions
-      const dimensions = sizeOf(absPath);
-
-      // Check if image is rotated (to switch width and height)
-      const rotated = [6, 8].includes(dimensions.orientation);
-
-      // Read EXIF data (JPEG only)
-      let exif = null;
-      try {
-        exif = await readExif(absPath);
-      } catch (err) {
-        if (!['NO_EXIF_SEGMENT', 'NOT_A_JPEG'].includes(err.code)) {
-          console.error(err);
-        }
-      }
-
-      await Item.updateOrCreate(
-        { path: absPath },
-        {
-          filename,
-          height: rotated ? dimensions.width : dimensions.height,
-          width: rotated ? dimensions.height : dimensions.width,
-          orientation: dimensions.orientation || 1,
-          exif: {
-            dateTimeOriginal: exif?.exif?.DateTimeOriginal || null,
-          },
-        }
-      );
+      count += await scanRecursive(absPath);
+    } else if (mime.lookup(absPath).startsWith('image/')) {
+      await importFile(absPath);
 
       count += 1;
     }
@@ -207,7 +215,13 @@ async function remove(req, res) {
   for (let i = 0; i < items.length; i += 1) {
     const item = items[i];
 
-    fs.unlinkSync(item.path);
+    try {
+      fs.unlinkSync(item.path);
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        console.error(`File ${item.path} does not exist`);
+      }
+    }
 
     await Item.deleteOne(item);
   }
@@ -318,10 +332,29 @@ async function getAll(req, res) {
   }
 }
 
+/**
+ * Upload file(s).
+ *
+ * @param {Express.Request} req
+ * @param {Express.Response} res
+ */
+async function upload(req, res) {
+  const fileImports = [];
+
+  // Start imports simultaneously
+  req.files.forEach((file) => fileImports.push(importFile(file.path)));
+
+  // Wait for all imports to finish
+  await Promise.all(fileImports);
+
+  res.sendStatus(200);
+}
+
 module.exports = {
   scan,
   getAll,
   getOne,
   download,
   remove,
+  upload,
 };

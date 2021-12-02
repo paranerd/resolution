@@ -7,6 +7,7 @@ const router = express.Router();
 
 // Middleware
 const auth = require('../middleware/auth');
+const uploader = require('../middleware/upload');
 
 // Controllers
 const itemController = require('../controllers/item');
@@ -26,6 +27,12 @@ router.get(
   '/api/item/download',
   auth.isAuthenticated(),
   itemController.download
+);
+router.post(
+  '/api/item/upload',
+  uploader.array('files'),
+  auth.isAuthenticated(),
+  itemController.upload
 );
 router.post('/api/item/scan', auth.isAuthenticated(), itemController.scan);
 router.get('/api/item/:id', auth.isAuthenticated(), itemController.getOne);

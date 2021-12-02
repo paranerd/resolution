@@ -1,10 +1,13 @@
+// Read ENV variables
+require('dotenv').config();
+
 const request = require('supertest');
 const mongoose = require('mongoose');
 const User = require('../models/user');
 const app = require('../app');
 
 // Connect to MongoDB
-require('../config/database').connect();
+require('../util/database').connect();
 
 const username = 'admin';
 const password = 'password';

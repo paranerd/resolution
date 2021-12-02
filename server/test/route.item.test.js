@@ -1,11 +1,19 @@
+// Read ENV variables
+require('dotenv').config();
+
+// Set media directory to test files
+process.env.MEDIA_DIR = './test/media';
+process.env.UPLOAD_DIR = './test/media/upload';
+
 const request = require('supertest');
 const mongoose = require('mongoose');
+const fs = require('fs');
 const User = require('../models/user');
 const Item = require('../models/item');
 const app = require('../app');
 
 // Connect to MongoDB
-require('../config/database').connect();
+require('../util/database').connect();
 
 const username = 'admin';
 const password = 'password';
@@ -29,11 +37,21 @@ beforeAll(async () => {
   // Save user
   await user.save();
 
-  // Set media directory to test files
-  process.env.MEDIA_DIR = './test/testfiles';
+  // Create media and upload directory
+  if (!fs.existsSync(process.env.UPLOAD_DIR)) {
+    fs.mkdirSync(process.env.UPLOAD_DIR, { recursive: true });
+  } else {
+    fs.rmdirSync(process.env.MEDIA_DIR, { recursive: true });
+    fs.mkdirSync(process.env.UPLOAD_DIR, { recursive: true });
+  }
 });
 
 afterAll(async () => {
+  // Remove media and upload directory
+  if (fs.existsSync(process.env.MEDIA_DIR)) {
+    fs.rmdirSync(process.env.MEDIA_DIR, { recursive: true });
+  }
+
   // Disconnect from DB
   mongoose.connection.close();
 });
@@ -59,6 +77,18 @@ describe('Item routes', () => {
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('items');
     expect(res.body.items).toHaveLength(0);
+  });
+
+  it('Should upload file', async () => {
+    const res = await request(app)
+      .post('/api/item/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .attach('files', './test/testfiles/test-1.jpg')
+      .attach('files', './test/testfiles/test-2.jpg')
+      .attach('files', './test/testfiles/test-3.jpg')
+      .attach('files', './test/testfiles/test-4.jpg');
+
+    expect(res.statusCode).toEqual(200);
   });
 
   it('Should confirm 4 imported items', async () => {
