@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/.git
+**/.env.local
+**/npm-debug.log
+server/media
+server/media_backup
+server/tmp
+server/test
+server/jest.config.js
