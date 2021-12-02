@@ -11,6 +11,7 @@ const auth = require('../middleware/auth');
 // Controllers
 const itemController = require('../controllers/item');
 const userController = require('../controllers/user');
+const systemController = require('../controllers/system');
 
 // Include cookie parser
 router.use(cookieParser());
@@ -41,7 +42,14 @@ router.post(
 );
 router.post('/api/user/logout', auth.isAuthenticated(), userController.logout);
 
-// Serve frontend
+// System routes
+router.get(
+  '/api/system/cast-app-id',
+  auth.isAuthenticated(),
+  systemController.getCastAppId
+);
+
+// Frontend
 router.use('/', express.static('./dist'));
 
 router.use('*', (req, res) => {

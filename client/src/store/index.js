@@ -5,6 +5,7 @@ const store = createStore({
     return {
       selected: [],
       items: [],
+      castAppId: '',
     };
   },
   mutations: {
@@ -20,6 +21,9 @@ const store = createStore({
       } else {
         state.selected = [];
       }
+    },
+    setCastAppId(state, id) {
+      state.castAppId = id;
     },
   },
 });

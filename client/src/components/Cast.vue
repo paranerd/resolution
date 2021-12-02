@@ -4,6 +4,7 @@
 
 <script>
 import TokenService from '@/services/token';
+import SystemService from '@/services/system';
 
 export default {
   props: ['id'],
@@ -12,6 +13,7 @@ export default {
       host: process.env.VUE_APP_API_URL.startsWith('http')
         ? ''
         : `${window.location.protocol}//${window.location.host}`,
+      castAppId: null,
     };
   },
   watch: {
@@ -19,8 +21,12 @@ export default {
       this.load(newVal);
     },
   },
-  created() {
-    // First set up the callback function...
+  async created() {
+    // First get the Cast App ID
+    this.castAppId = await SystemService.getCastAppId();
+    console.log(this.castAppId);
+
+    // Next set up the callback function...
     window['__onGCastApiAvailable'] = (isAvailable) => {
       if (isAvailable) {
         this.initializeCastApi();
@@ -40,7 +46,7 @@ export default {
   methods: {
     initializeCastApi() {
       window.cast.framework.CastContext.getInstance().setOptions({
-        receiverApplicationId: process.env.VUE_APP_CAST_APP_ID,
+        receiverApplicationId: this.castAppId,
         autoJoinPolicy: window.chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
       });
     },
