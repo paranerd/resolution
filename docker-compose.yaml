@@ -1,22 +1,24 @@
 version: "3"
 services:
   server:
-    image: openphotos
-    container_name: openphotos
+    image: resolution
+    container_name: resolution
     restart: unless-stopped
+    environment:
+      CAST_APP_ID: "12345"
     ports:
       - "8080:8080"
     depends_on:
       - mongo
     volumes:
-      - /path/to/openphotos/config:/usr/src/app/config
-      - /path/to/openphotos/data:/usr/src/app/data
+      - ./config:/app/config
+      - ./media:/app/media
   mongo:
-    container_name: openphotos-db
+    container_name: resolution-db
     restart: unless-stopped
     image: mongo
     volumes:
-      - openphotos-data:/data/db
+      - resolution-data:/data/db
 
 volumes:
-  openphotos-data:
+  resolution-data:
