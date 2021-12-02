@@ -1,7 +1,7 @@
 version: "3"
 services:
   server:
-    image: resolution
+    image: paranerd/resolution
     container_name: resolution
     restart: unless-stopped
     environment:
