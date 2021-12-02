@@ -15,7 +15,6 @@ class SystemService {
       try {
         // Fetch items from server
         const res = await axios.get('/system/cast-app-id');
-        console.log('res', res);
 
         // Extract Cast App ID
         const castAppId = res.data.castAppId;
