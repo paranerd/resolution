@@ -24,7 +24,6 @@ export default {
   async created() {
     // First get the Cast App ID
     this.castAppId = await SystemService.getCastAppId();
-    console.log(this.castAppId);
 
     // Next set up the callback function...
     window['__onGCastApiAvailable'] = (isAvailable) => {
