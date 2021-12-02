@@ -9,6 +9,8 @@ class UserService {
     try {
       // Remove refresh token from server
       await axios.post('/user/logout');
+    } catch (err) {
+      console.error(err);
     } finally {
       // Remove tokens locally
       TokenService.removeToken();
