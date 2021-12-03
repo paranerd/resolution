@@ -30,7 +30,11 @@ export default {
       ItemService.download(this.$store.state.selected);
     },
     async remove() {
+      // Remove item from backend
       await ItemService.remove(this.$store.state.selected);
+
+      // Remove item from frontend
+      this.$store.commit('removeItems', this.$store.state.selected);
     },
   },
 };
