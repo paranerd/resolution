@@ -1,5 +1,5 @@
 const sharp = require('sharp');
-const sizeOf = require('image-size');
+const probe = require('probe-image-size');
 const archiver = require('archiver');
 const mime = require('mime-types');
 const fs = require('fs');
@@ -43,7 +43,7 @@ async function readExif(filePath) {
 async function importFile(absPath) {
   // Only handle images
   // Get image dimensions
-  const dimensions = sizeOf(absPath);
+  const dimensions = await probe(fs.createReadStream(absPath));
 
   // Check if image is rotated (to switch width and height)
   const rotated = [6, 8].includes(dimensions.orientation);
@@ -58,7 +58,9 @@ async function importFile(absPath) {
     }
   }
 
-  return Item.updateOrCreate(
+  const exists = await Item.findOne({ path: absPath });
+
+  const item = Item.updateOrCreate(
     { path: absPath },
     {
       filename: path.basename(absPath),
@@ -70,6 +72,8 @@ async function importFile(absPath) {
       },
     }
   );
+
+  return exists ? null : item;
 }
 
 /**
@@ -103,8 +107,6 @@ async function scanRecursive(currentPath) {
 async function scan(req, res) {
   try {
     const count = await scanRecursive(process.env.MEDIA_DIR);
-
-    console.log(`Scanned ${count} item(s)`);
 
     res.status(200).json({ msg: count });
   } catch (err) {
@@ -345,9 +347,22 @@ async function upload(req, res) {
   req.files.forEach((file) => fileImports.push(importFile(file.path)));
 
   // Wait for all imports to finish
-  await Promise.all(fileImports);
+  let uploadedItems = await await Promise.all(fileImports);
 
-  res.sendStatus(200);
+  // Remove non-imports
+  uploadedItems = uploadedItems.filter((item) => item !== null);
+
+  const returnItems = [];
+
+  for (let i = 0; i < uploadedItems.length; i += 1) {
+    returnItems.push({
+      id: uploadedItems[i].id,
+      width: uploadedItems[i].width,
+      height: uploadedItems[i].height,
+    });
+  }
+
+  res.status(200).json({ items: returnItems });
 }
 
 module.exports = {
