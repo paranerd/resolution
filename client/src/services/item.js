@@ -5,10 +5,11 @@ class ItemService {
   /**
    * Fetch all items.
    *
+   * @param {boolean} force
    * @returns {Array}
    */
-  async getAll() {
-    if (!store.state.items.length == 0) {
+  async getAll(force) {
+    if (!force && !store.state.items.length == 0) {
       // Return cached items
       return store.state.items;
     } else {
