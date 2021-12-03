@@ -8,6 +8,7 @@ process.env.UPLOAD_DIR = './test/media/upload';
 const request = require('supertest');
 const mongoose = require('mongoose');
 const fs = require('fs');
+const path = require('path');
 const User = require('../models/user');
 const Item = require('../models/item');
 const app = require('../app');
@@ -36,20 +37,12 @@ beforeAll(async () => {
 
   // Save user
   await user.save();
-
-  // Create media and upload directory
-  if (!fs.existsSync(process.env.UPLOAD_DIR)) {
-    fs.mkdirSync(process.env.UPLOAD_DIR, { recursive: true });
-  } else {
-    fs.rmdirSync(process.env.MEDIA_DIR, { recursive: true });
-    fs.mkdirSync(process.env.UPLOAD_DIR, { recursive: true });
-  }
 });
 
 afterAll(async () => {
   // Remove media and upload directory
   if (fs.existsSync(process.env.MEDIA_DIR)) {
-    fs.rmdirSync(process.env.MEDIA_DIR, { recursive: true });
+    fs.rmSync(process.env.MEDIA_DIR, { recursive: true, force: true });
   }
 
   // Disconnect from DB
@@ -57,6 +50,21 @@ afterAll(async () => {
 });
 
 describe('Item routes', () => {
+  // Create media and upload directory
+  // Doing this in beforeAll didn't finish before entering describe.
+  if (!fs.existsSync(process.env.UPLOAD_DIR)) {
+    fs.mkdirSync(process.env.UPLOAD_DIR, { recursive: true });
+  } else {
+    fs.rmSync(process.env.MEDIA_DIR, { recursive: true, force: true });
+    fs.mkdirSync(process.env.UPLOAD_DIR, { recursive: true });
+  }
+
+  // Copy one testfile to upload folder
+  const source = './test/testfiles/test-1.jpg';
+  const dest = path.join(process.env.UPLOAD_DIR, 'test-1.jpg');
+
+  fs.copyFileSync(source, dest);
+
   it('Should return token on successful login', async () => {
     const res = await request(app).post('/api/user/login').send({
       username,
@@ -79,7 +87,17 @@ describe('Item routes', () => {
     expect(res.body.items).toHaveLength(0);
   });
 
-  it('Should upload file', async () => {
+  it('Should confirm 1 imported item', async () => {
+    const res = await request(app)
+      .post('/api/item/scan')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('msg');
+    expect(res.body.msg).toEqual(1);
+  });
+
+  it('Should confirm 3 uploaded files', async () => {
     const res = await request(app)
       .post('/api/item/upload')
       .set('Authorization', `Bearer ${token}`)
@@ -89,6 +107,8 @@ describe('Item routes', () => {
       .attach('files', './test/testfiles/test-4.jpg');
 
     expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('items');
+    expect(res.body.items).toHaveLength(3);
   });
 
   it('Should confirm 4 imported items', async () => {
