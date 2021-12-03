@@ -13,7 +13,6 @@
 
 <script>
 import axios from '@/services/axios.js';
-import ItemService from '@/services/item';
 
 export default {
   data() {
@@ -31,7 +30,7 @@ export default {
         formData.append('files', file);
       }
 
-      await axios.post('/item/upload', formData, {
+      const res = await axios.post('/item/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -43,13 +42,13 @@ export default {
         },
       });
 
-      try {
-        await ItemService.getAll(true);
-      } catch (err) {
-        // Do nothing
-      }
-
+      // Reset file input
       this.$refs.fileInput.value = null;
+
+      // Add uploaded items
+      if (res.data.items.length) {
+        this.$store.commit('addItems', res.data.items);
+      }
     },
   },
 };
