@@ -91,6 +91,18 @@ export default {
       return this.$store.state.selected.includes(this.id);
     },
   },
+  watch: {
+    width(oldVal, newVal) {
+      if (oldVal !== newVal) {
+        this.url = null;
+      }
+    },
+    height(oldVal, newVal) {
+      if (oldVal !== newVal) {
+        this.url = null;
+      }
+    },
+  },
   methods: {
     async lazyload() {
       if (this.url) {
