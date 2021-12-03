@@ -34,7 +34,7 @@ export default {
   },
   data() {
     return {
-      items: [],
+      // items: [],
       itemsFinal: [],
       error: null,
       totalResults: 0,
@@ -45,6 +45,17 @@ export default {
       currentLoadJobTimestamp: null,
       itemRefs: [],
     };
+  },
+  computed: {
+    items() {
+      return this.$store.state.items;
+    },
+  },
+  watch: {
+    items() {
+      this.calculateGallery();
+      this.lazyload();
+    },
   },
   async created() {
     this.items = await this.fetchItems();
@@ -104,6 +115,8 @@ export default {
       } finally {
         this.loading = false;
       }
+
+      return [];
     },
     /**
      * Calculate the number of pixels that are horizontally added to an .item div.
@@ -148,6 +161,7 @@ export default {
     calculateGallery() {
       const totalWidth = this.getTotalWidth();
       const horizontalMargin = this.getHorizontalMargin();
+      const scrollbarWidth = this.getScrollbarWidth();
 
       const minHeight = 300;
       const maxHeight = 550;
@@ -160,9 +174,11 @@ export default {
         itemsForRow.push(item);
 
         // Calculate the remaining width available in the current row
-        // Subtract 20px for the scrollbar
+        // Subtract space for scrollbar
         const availableWidth =
-          totalWidth - itemsForRow.length * horizontalMargin - 20;
+          totalWidth -
+          itemsForRow.length * horizontalMargin -
+          scrollbarWidth * 1.5;
 
         // Get height of largest item
         const largestHeight = itemsForRow
@@ -210,6 +226,25 @@ export default {
       }
 
       this.itemsFinal = itemsFinal.concat(itemsForRow);
+    },
+    getScrollbarWidth() {
+      // Creating invisible container
+      const outer = document.createElement('div');
+      outer.style.visibility = 'hidden';
+      outer.style.overflow = 'scroll'; // forcing scrollbar to appear
+      document.body.appendChild(outer);
+
+      // Creating inner element and placing it in the container
+      const inner = document.createElement('div');
+      outer.appendChild(inner);
+
+      // Calculating difference between container's full width and the child width
+      const scrollbarWidth = outer.offsetWidth - inner.offsetWidth;
+
+      // Removing temporary elements from the DOM
+      outer.parentNode.removeChild(outer);
+
+      return scrollbarWidth;
     },
   },
 };
