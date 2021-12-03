@@ -24,13 +24,13 @@
       </button>
 
       <!-- Upload -->
-      <button class="navbar-button plus-text">
+      <button class="navbar-button">
         <svg width="24px" height="24px" viewBox="0 0 24 24">
           <path
             d="M4 15h2v3h12v-3h2v3c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2m4.41-7.59L11 7.83V16h2V7.83l2.59 2.59L17 9l-5-5-5 5 1.41 1.41z"
           ></path>
         </svg>
-        <span>Upload</span>
+        <Upload />
       </button>
 
       <!-- User -->
@@ -44,12 +44,14 @@
 
 <script>
 import ContextMenu from '@/components/ContextMenu.vue';
+import Upload from '@/components/Upload.vue';
 import UserService from '@/services/user';
 import axios from '@/services/axios.js';
 
 export default {
   components: {
     ContextMenu,
+    Upload,
   },
   data() {
     return {
@@ -95,12 +97,15 @@ nav {
 }
 
 .navbar-button {
+  position: relative;
   padding: 0.5rem;
   width: 50px;
   height: 50px;
   border-radius: 50px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  fill: $text-color;
 
   &:hover {
     background: $secondary-color;
@@ -113,10 +118,9 @@ nav {
   &.plus-text {
     width: auto;
     border-radius: 5px;
-    fill: $text-color;
   }
 
-  span {
+  .button-text {
     font-family: roboto;
     margin-left: 0.75rem;
   }
