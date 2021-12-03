@@ -82,9 +82,9 @@ describe('User routes', () => {
       .post('/api/user/refresh')
       .set('Authorization', `Bearer ${refreshToken}`);
 
-      expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('token');
-      expect(res.body).toHaveProperty('refreshToken');
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('token');
+    expect(res.body).toHaveProperty('refreshToken');
   });
 
   it('Should remove refreshToken from db on logout', async () => {
