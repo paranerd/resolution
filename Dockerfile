@@ -10,7 +10,7 @@ FROM node:16 AS server-build
 WORKDIR /app
 COPY --from=ui-build /app/dist ./dist
 COPY server/ ./
-RUN npm install
+RUN npm install --production
 
 # Set environment variables
 ENV DOCKER=true
