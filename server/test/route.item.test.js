@@ -18,6 +18,7 @@ require('../util/database').connect();
 
 const username = 'admin';
 const password = 'password';
+const testfileDir = './test/testfiles';
 let token;
 let item;
 
@@ -60,10 +61,12 @@ describe('Item routes', () => {
   }
 
   // Copy one testfile to upload folder
-  const source = './test/testfiles/test-1.jpg';
-  const dest = path.join(process.env.UPLOAD_DIR, 'test-1.jpg');
+  const source = path.join(testfileDir, 'test-1.jpg');
+  const mediaDest = path.join(process.env.MEDIA_DIR, 'test-2.jpg');
+  const uploadDest = path.join(process.env.UPLOAD_DIR, 'test-2.jpg');
 
-  fs.copyFileSync(source, dest);
+  fs.copyFileSync(source, mediaDest);
+  fs.copyFileSync(source, uploadDest);
 
   it('Should return token on successful login', async () => {
     const res = await request(app).post('/api/user/login').send({
@@ -87,38 +90,42 @@ describe('Item routes', () => {
     expect(res.body.items).toHaveLength(0);
   });
 
-  it('Should confirm 1 imported item', async () => {
+  it('Should confirm 2 imported items', async () => {
     const res = await request(app)
       .post('/api/item/scan')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('msg');
-    expect(res.body.msg).toEqual(1);
+    expect(res.body.msg).toEqual(2);
   });
 
   it('Should confirm 3 uploaded files', async () => {
     const res = await request(app)
       .post('/api/item/upload')
       .set('Authorization', `Bearer ${token}`)
-      .attach('files', './test/testfiles/test-1.jpg')
-      .attach('files', './test/testfiles/test-2.jpg')
-      .attach('files', './test/testfiles/test-3.jpg')
-      .attach('files', './test/testfiles/test-4.jpg');
+      .attach('files', path.join(testfileDir, 'test-1.jpg'))
+      .attach('files', path.join(testfileDir, 'test-2.jpg'))
+      .attach('files', path.join(testfileDir, 'test-3.jpg'))
+      .attach('files', path.join(testfileDir, 'test-4.jpg'));
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('items');
     expect(res.body.items).toHaveLength(3);
+
+    const testFile4Path = path.join(process.env.UPLOAD_DIR, 'test-4.jpg');
+
+    expect(fs.existsSync(testFile4Path)).toBe(true);
   });
 
-  it('Should confirm 4 imported items', async () => {
+  it('Should confirm 5 imported items', async () => {
     const res = await request(app)
       .post('/api/item/scan')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('msg');
-    expect(res.body.msg).toEqual(4);
+    expect(res.body.msg).toEqual(5);
   });
 
   it('Should return no additional imported items', async () => {
@@ -128,18 +135,19 @@ describe('Item routes', () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('msg');
-    expect(res.body.msg).toEqual(4);
+    expect(res.body.msg).toEqual(5);
   });
 
-  it('Should return 4 items', async () => {
+  it('Should return 5 items', async () => {
     const res = await request(app)
       .get('/api/item')
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('items');
-    expect(res.body.items).toHaveLength(4);
+    expect(res.body.items).toHaveLength(5);
 
+    // Get test-1.jpg item
     item = res.body.items.find((el) => el.width === 416 && el.height === 521);
   });
 
@@ -171,5 +179,21 @@ describe('Item routes', () => {
     expect(res.statusCode).toEqual(200);
     expect(res.headers['content-disposition']).toMatch(/filename="test-1.jpg"/);
     expect(res.body).toBeInstanceOf(Buffer);
+  });
+
+  it('Should remove the item', async () => {
+    const res = await request(app)
+      .delete(`/api/item`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        ids: [item.id],
+      });
+
+    expect(res.statusCode).toEqual(200);
+
+    const testFile1Path = path.join(process.env.MEDIA_DIR, 'test-1.jpg');
+
+    expect(fs.existsSync(testFile1Path)).toBe(false);
+
   });
 });
