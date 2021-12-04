@@ -1,11 +1,25 @@
 import { createStore } from 'vuex';
 
+function compare(key, order) {
+  return (a, b) => {
+    if (a[key] < b[key]) {
+      return -1 * order;
+    }
+    if (a[key] > b[key]) {
+      return 1 * order;
+    }
+    return 0;
+  };
+}
+
 const store = createStore({
   state() {
     return {
       selected: [],
       items: [],
       castAppId: '',
+      sortBy: 'created',
+      sortOrder: -1,
     };
   },
   mutations: {
@@ -25,7 +39,7 @@ const store = createStore({
      * @param {Array} items
      */
     addItems(state, items) {
-      state.items = [...state.items, ...items];
+      state.items = [...state.items, ...items].sort(compare(state.sortBy, state.sortOrder));
     },
     /**
      * Remove items.

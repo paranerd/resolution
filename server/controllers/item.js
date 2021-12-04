@@ -35,6 +35,48 @@ async function readExif(filePath) {
 }
 
 /**
+ * Replace substring at index.
+ *
+ * @param {String} str
+ * @param {Number} index
+ * @param {String} newValue
+ * @returns {String}
+ */
+function replaceAtIndex(str, index, newValue) {
+  return str.substr(0, index) + newValue + str.substr(index + newValue.length);
+}
+
+/**
+ * Parse file create time.
+ *
+ * @param {String} filePath
+ * @param {Object} exif
+ * @returns
+ */
+function parseCreatedTime(filePath, exif) {
+  let created;
+
+  if (exif) {
+    // Parse from EXIF if exists
+    created =
+      exif?.exif?.DateTimeOriginal ||
+      exif?.exif?.CreateDate ||
+      exif?.ModifyDate;
+
+    if (created) {
+      // Replace ':' with '-' in date
+      created = replaceAtIndex(created, 4, '-');
+      created = replaceAtIndex(created, 7, '-');
+    }
+  }
+
+  // Default to file modification time
+  created = created || fs.statSync(filePath).mtime;
+
+  return Date.parse(created);
+}
+
+/**
  * Import file into database
  *
  * @param {string} absPath
@@ -64,6 +106,7 @@ async function importFile(absPath) {
     { path: absPath },
     {
       filename: path.basename(absPath),
+      created: parseCreatedTime(absPath, exif),
       height: rotated ? dimensions.width : dimensions.height,
       width: rotated ? dimensions.height : dimensions.width,
       orientation: dimensions.orientation || 1,
@@ -176,6 +219,13 @@ async function zip(items) {
   });
 }
 
+/**
+ * Download file(s).
+ * Zip if multiple files.
+ *
+ * @param {Express.Request} req
+ * @param {Express.Response} res
+ */
 async function download(req, res) {
   const { ids } = req.query;
 
@@ -257,6 +307,12 @@ function resize(imagePath, width, height) {
   return readStream.pipe(transform);
 }
 
+/**
+ * Get single item.
+ *
+ * @param {Express.Request} req
+ * @param {Express.Response} res
+ */
 async function getOne(req, res) {
   try {
     const item = await Item.findOne({ id: req.params.id });
@@ -280,6 +336,12 @@ async function getOne(req, res) {
   }
 }
 
+/**
+ * Get basic info for all items.
+ *
+ * @param {Express.Request} req
+ * @param {Express.Response} res
+ */
 async function getAll(req, res) {
   try {
     const query = {};
@@ -301,10 +363,15 @@ async function getAll(req, res) {
       ? Number(req.query.limit)
       : 100000000;
 
+    // Set sort order
+    const sortAggregation = {};
+    sortAggregation.created = -1;
+    aggregation.push({ $sort: sortAggregation });
+
     const items = await Item.aggregate(
       aggregation.concat([
         { $skip: (page - 1) * pageSize },
-        { $project: { _id: 0, id: 1, height: 1, width: 1 } },
+        { $project: { _id: 0, id: 1, height: 1, width: 1, created: 1 } },
         { $limit: pageSize },
       ])
     ).allowDiskUse(true);
@@ -347,7 +414,7 @@ async function upload(req, res) {
   req.files.forEach((file) => fileImports.push(importFile(file.path)));
 
   // Wait for all imports to finish
-  let uploadedItems = await await Promise.all(fileImports);
+  let uploadedItems = await Promise.all(fileImports);
 
   // Remove non-imports
   uploadedItems = uploadedItems.filter((item) => item !== null);
@@ -359,6 +426,7 @@ async function upload(req, res) {
       id: uploadedItems[i].id,
       width: uploadedItems[i].width,
       height: uploadedItems[i].height,
+      created: uploadedItems[i].created,
     });
   }
 

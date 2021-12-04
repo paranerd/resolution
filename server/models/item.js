@@ -6,7 +6,7 @@ let Item;
 const ItemSchema = new mongoose.Schema({
   id: { type: String, required: true, default: uuid.v4 },
   filename: { type: String, required: true },
-  uploaded: { type: Number, default: Date.now },
+  created: { type: Number, default: Date.now },
   path: { type: String, required: true },
   height: { type: Number, required: true },
   width: { type: Number, required: true },
