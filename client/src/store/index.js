@@ -39,7 +39,9 @@ const store = createStore({
      * @param {Array} items
      */
     addItems(state, items) {
-      state.items = [...state.items, ...items].sort(compare(state.sortBy, state.sortOrder));
+      state.items = [...state.items, ...items].sort(
+        compare(state.sortBy, state.sortOrder)
+      );
     },
     /**
      * Remove items.
@@ -48,7 +50,9 @@ const store = createStore({
      * @param {Array<String>} ids
      */
     removeItems(state, ids) {
-      state.items = state.items.filter((item) => !ids.includes(item.id));
+      state.items = state.items
+        .filter((item) => !ids.includes(item.id))
+        .sort(compare(state.sortBy, state.sortOrder));
     },
     /**
      * Set item as selected.

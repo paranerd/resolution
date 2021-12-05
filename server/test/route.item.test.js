@@ -194,6 +194,5 @@ describe('Item routes', () => {
     const testFile1Path = path.join(process.env.MEDIA_DIR, 'test-1.jpg');
 
     expect(fs.existsSync(testFile1Path)).toBe(false);
-
   });
 });
