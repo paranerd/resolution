@@ -1,5 +1,5 @@
 <template>
-  <google-cast-launcher></google-cast-launcher>
+  <google-cast-launcher v-if="castAppId"></google-cast-launcher>
 </template>
 
 <script>
@@ -24,6 +24,10 @@ export default {
   async created() {
     // First get the Cast App ID
     this.castAppId = await SystemService.getCastAppId();
+
+    if (!this.castAppId) {
+      return;
+    }
 
     // Next set up the callback function...
     window['__onGCastApiAvailable'] = (isAvailable) => {
