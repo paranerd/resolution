@@ -46,6 +46,7 @@
 import ContextMenu from '@/components/ContextMenu.vue';
 import Upload from '@/components/Upload.vue';
 import UserService from '@/services/user';
+import ItemService from '@/services/item';
 import axios from '@/services/axios.js';
 
 export default {
@@ -77,6 +78,7 @@ export default {
     },
     async scan() {
       await axios.post(`/item/scan`);
+      await ItemService.getAll(true);
     },
   },
 };

@@ -3,7 +3,7 @@
     class="item"
     ref="item"
     :class="{ selected, lazy }"
-    v-bind:style="{ height: height + 'px', width: width + 'px' }"
+    v-bind:style="{ height: item.uiHeight + 'px', width: item.uiWidth + 'px' }"
     @click="handleItemClick()"
   >
     <!-- Image -->
@@ -11,6 +11,11 @@
       class="image"
       v-bind:style="{ 'background-image': 'url(' + url + ')' }"
     ></div>
+
+    <div v-if="item.duration" class="duration">
+      <span>{{ formattedDuration }}</span>
+      <font-awesome-icon icon="play-circle" />
+    </div>
 
     <!-- Overlay -->
     <div class="item-overlay"></div>
@@ -73,7 +78,7 @@
 import TokenService from '@/services/token';
 
 export default {
-  props: ['id', 'width', 'height'],
+  props: ['item'],
   data() {
     return {
       selectedCount: 0,
@@ -88,22 +93,45 @@ export default {
   },
   computed: {
     selected() {
-      return this.$store.state.selected.includes(this.id);
+      return this.$store.state.selected.includes(this.item.id);
+    },
+    formattedDuration() {
+      if (!this.item.duration) {
+        return null;
+      }
+
+      let seconds = this.item.duration;
+      const minutes = Math.floor(seconds / 60);
+      seconds -= minutes * 60;
+
+      const minutesFormatted = `0${minutes}`.slice(-2);
+      const secondsFormatted = `0${seconds}`.slice(-2);
+
+      return `${minutesFormatted}:${secondsFormatted}`;
+    },
+    width() {
+      return this.item.uiWidth;
+    },
+    height() {
+      return this.item.uiHeight;
     },
   },
   watch: {
-    width(oldVal, newVal) {
+    width(newVal, oldVal) {
       if (oldVal !== newVal) {
         this.url = null;
       }
     },
-    height(oldVal, newVal) {
+    height(newVal, oldVal) {
       if (oldVal !== newVal) {
         this.url = null;
       }
     },
   },
   methods: {
+    /**
+     * Load item if in view.
+     */
     async lazyload() {
       if (this.url) {
         return;
@@ -114,11 +142,19 @@ export default {
       if (this.isInView(item)) {
         this.lazy = false;
 
-        this.url = `${process.env.VUE_APP_API_URL}/item/${this.id}?w=${
-          this.width
-        }&h=${this.height}&token=${await TokenService.getToken()}`;
+        this.url = `${process.env.VUE_APP_API_URL}/item/${this.item.id}?w=${
+          this.item.uiWidth
+        }&thumbnail=true&h=${
+          this.item.uiHeight
+        }&token=${await TokenService.getToken()}`;
       }
     },
+    /**
+     * Check if item is in view.
+     *
+     * @param {HTMLElement} elem
+     * @return {boolean}
+     */
     isInView(elem) {
       const viewportOffset = elem.getBoundingClientRect();
 
@@ -126,12 +162,21 @@ export default {
         viewportOffset.top < window.innerHeight && viewportOffset.bottom > 0
       );
     },
+    /**
+     * Set item as selected in store.
+     */
     select() {
-      this.$store.commit('select', this.id);
+      this.$store.commit('select', this.item.id);
     },
+    /**
+     * Set item as unselected in store.
+     */
     unselect() {
-      this.$store.commit('unselect', this.id);
+      this.$store.commit('unselect', this.item.id);
     },
+    /**
+     * Toggle item selection.
+     */
     toggleSelect() {
       if (this.selected) {
         this.unselect();
@@ -139,17 +184,17 @@ export default {
         this.select();
       }
     },
+    /**
+     * Handle item click depending on selection status.
+     */
     handleItemClick() {
       if (this.selected) {
         this.unselect();
-      } else if (this.countSelected()) {
+      } else if (this.$store.state.selected.length) {
         this.select();
       } else {
-        this.$router.push({ name: 'viewer', params: { id: this.id } });
+        this.$router.push({ name: 'viewer', params: { id: this.item.id } });
       }
-    },
-    countSelected() {
-      return this.$store.state.selected.length;
     },
   },
 };
@@ -262,5 +307,17 @@ export default {
 .item-checkbox-shine {
   stroke: $accent-color;
   fill: none;
+}
+
+.duration {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  color: white;
+
+  span {
+    display: inline-block;
+    margin-right: 5px;
+  }
 }
 </style>

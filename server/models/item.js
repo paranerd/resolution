@@ -5,15 +5,15 @@ let Item;
 
 const ItemSchema = new mongoose.Schema({
   id: { type: String, required: true, default: uuid.v4 },
+  type: { type: String, required: true },
+  hash: { type: String, required: true },
   filename: { type: String, required: true },
   created: { type: Number, default: Date.now },
   path: { type: String, required: true },
+  thumbnailPath: { type: String },
   height: { type: Number, required: true },
   width: { type: Number, required: true },
-  orientation: { type: Number, required: true },
-  exif: {
-    dateTimeOriginal: { type: String },
-  },
+  duration: { type: Number },
 });
 
 /**
