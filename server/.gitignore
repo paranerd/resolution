@@ -4,3 +4,5 @@ tmp/
 media/
 media_backup/
 .env.local
+thumbnails/
+debug.js

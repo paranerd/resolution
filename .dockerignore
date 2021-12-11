@@ -8,3 +8,4 @@ server/media_backup
 server/tmp
 server/test
 server/jest.config.js
+server/thumbnails

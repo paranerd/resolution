@@ -118,16 +118,6 @@ describe('Item routes', () => {
     expect(fs.existsSync(testFile4Path)).toBe(true);
   });
 
-  it('Should confirm 5 imported items', async () => {
-    const res = await request(app)
-      .post('/api/item/scan')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.statusCode).toEqual(200);
-    expect(res.body).toHaveProperty('msg');
-    expect(res.body.msg).toEqual(5);
-  });
-
   it('Should return no additional imported items', async () => {
     const res = await request(app)
       .post('/api/item/scan')
@@ -135,7 +125,7 @@ describe('Item routes', () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('msg');
-    expect(res.body.msg).toEqual(5);
+    expect(res.body.msg).toEqual(0);
   });
 
   it('Should return 5 items', async () => {

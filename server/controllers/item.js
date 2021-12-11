@@ -1,5 +1,7 @@
+const crypto = require('crypto');
 const sharp = require('sharp');
 const probe = require('probe-image-size');
+const ffmpeg = require('fluent-ffmpeg');
 const archiver = require('archiver');
 const mime = require('mime-types');
 const fs = require('fs');
@@ -11,28 +13,19 @@ const Item = require('../models/item');
 // Temp path for zip files while downloading
 const TMP_PATH = path.join(__dirname, '..', 'tmp');
 
-/**
- * Read EXIF data.
- *
- * @param {string} filePath
- * @returns {Promise}
- */
-async function readExif(filePath) {
-  return new Promise((resolve, reject) => {
-    try {
-      // eslint-disable-next-line no-new
-      new ExifImage({ image: filePath }, (err, exifData) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(exifData);
-        }
-      });
-    } catch (err) {
-      reject(err);
-    }
-  });
-}
+// Path to video thumbnails
+const THUMBNAIL_PATH = path.join(__dirname, '..', 'thumbnails');
+
+// This filters the item attributes sent to the client
+const clientProjection = {
+  _id: 0,
+  id: 1,
+  type: 1,
+  height: 1,
+  width: 1,
+  created: 1,
+  duration: 1,
+};
 
 /**
  * Replace substring at index.
@@ -43,7 +36,9 @@ async function readExif(filePath) {
  * @returns {String}
  */
 function replaceAtIndex(str, index, newValue) {
-  return str.substr(0, index) + newValue + str.substr(index + newValue.length);
+  return (
+    str.substring(0, index) + newValue + str.substring(index + newValue.length)
+  );
 }
 
 /**
@@ -77,44 +72,210 @@ function parseCreatedTime(filePath, exif) {
 }
 
 /**
- * Import file into database
+ * Calculate file hash.
+ *
+ * @param {string} filePath
+ * @returns {Promise}
+ */
+async function getFileHash(filePath) {
+  return new Promise((resolve, reject) => {
+    const stream = fs.createReadStream(filePath);
+    const hash = crypto.createHash('md5');
+    hash.setEncoding('hex');
+
+    stream.on('end', () => {
+      hash.end();
+
+      resolve(hash.read());
+    });
+
+    stream.on('error', (err) => {
+      reject(err);
+    });
+
+    // Pipe file to hash object
+    stream.pipe(hash);
+  });
+}
+
+/**
+ * Generate thumbnail from video.
+ *
+ * @param {string} id
+ * @param {string} filePath
+ * @returns {Promise}
+ */
+async function generateVideoThumbnail(id, filePath) {
+  return new Promise((resolve, reject) => {
+    ffmpeg(filePath)
+      .screenshots({
+        count: 1,
+        filename: `${id}.jpg`,
+        folder: THUMBNAIL_PATH,
+      })
+      .on('end', () => {
+        resolve(`${THUMBNAIL_PATH}/${id}.jpg`);
+      })
+      .on('error', (err) => {
+        reject(err);
+      });
+  });
+}
+
+/**
+ * Read image metadata from EXIF.
+ *
+ * @param {string} filePath
+ * @returns {Promise}
+ */
+async function readImageMetadata(filePath) {
+  // Get image dimensions
+  const dimensions = await probe(fs.createReadStream(filePath));
+
+  // Check if image is rotated (to switch width and height)
+  const rotated = [6, 8].includes(dimensions.orientation);
+
+  return new Promise((resolve, reject) => {
+    try {
+      // eslint-disable-next-line no-new
+      new ExifImage({ image: filePath }, (err, exifData) => {
+        if (err && !['NO_EXIF_SEGMENT', 'NOT_A_JPEG'].includes(err.code)) {
+          reject(err);
+        } else {
+          resolve({
+            created: parseCreatedTime(filePath, exifData),
+            height: rotated ? dimensions.width : dimensions.height,
+            width: rotated ? dimensions.height : dimensions.width,
+          });
+        }
+      });
+    } catch (err) {
+      if (!['NO_EXIF_SEGMENT', 'NOT_A_JPEG'].includes(err.code)) {
+        reject(err);
+      }
+    }
+  });
+}
+
+/**
+ * Get video dimensions from metadata.
+ *
+ * @param {Object} streams
+ * @returns {Object}
+ */
+function getVideoDimensions(streams) {
+  for (let i = 0; i < streams.length; i += 1) {
+    if (Object.prototype.hasOwnProperty.call(streams[i], 'height')) {
+      return {
+        height: streams[i].height,
+        width: streams[i].width,
+      };
+    }
+  }
+
+  return {};
+}
+
+/**
+ * Read video metadata.
+ *
+ * @param {string} filePath
+ * @returns {Promise}
+ */
+async function readVideoMetadata(filePath) {
+  return new Promise((resolve, reject) => {
+    ffmpeg.ffprobe(filePath, (err, metadata) => {
+      if (err) {
+        reject(err);
+      } else {
+        // Check if image is rotated (to switch width and height)
+        const rotated = ['90', '270'].includes(
+          metadata.streams[0].tags?.rotate
+        );
+
+        // Get video dimensions
+        const dimensions = getVideoDimensions(metadata.streams);
+
+        resolve({
+          created: Date.parse(metadata.format.tags.creation_time),
+          duration: Math.round(metadata.format.duration),
+          width: rotated ? dimensions.height : dimensions.width,
+          height: rotated ? dimensions.width : dimensions.height,
+        });
+      }
+    });
+  });
+}
+
+/**
+ * Check if item's file has changed based on hash.
+ *
+ * @param {Item} item
+ * @returns {boolean}
+ */
+async function hasChanged(item) {
+  const currentHash = getFileHash(item.path);
+
+  return currentHash !== item.hash;
+}
+
+/**
+ * Import file into database.
  *
  * @param {string} absPath
  * @returns {Item}
  */
 async function importFile(absPath) {
-  // Only handle images
-  // Get image dimensions
-  const dimensions = await probe(fs.createReadStream(absPath));
+  // Get MIME type
+  const type = mime.lookup(absPath).split('/')[0];
 
-  // Check if image is rotated (to switch width and height)
-  const rotated = [6, 8].includes(dimensions.orientation);
-
-  // Read EXIF data (JPEG only)
-  let exif = null;
-  try {
-    exif = await readExif(absPath);
-  } catch (err) {
-    if (!['NO_EXIF_SEGMENT', 'NOT_A_JPEG'].includes(err.code)) {
-      console.error(err);
-    }
+  // Only support images and videos
+  if (!['image', 'video'].includes(type)) {
+    return null;
   }
 
+  // Check if item already exists
   const exists = await Item.findOne({ path: absPath });
 
-  const item = Item.updateOrCreate(
+  // Check if file has been modified
+  if (exists && !(await hasChanged(exists))) {
+    return null;
+  }
+
+  // Read metadata
+  let metadata = null;
+
+  try {
+    metadata =
+      type === 'image'
+        ? await readImageMetadata(absPath)
+        : await readVideoMetadata(absPath);
+  } catch (err) {
+    console.error(err);
+  }
+
+  const item = await Item.updateOrCreate(
     { path: absPath },
     {
+      type,
+      hash: await getFileHash(absPath),
       filename: path.basename(absPath),
-      created: parseCreatedTime(absPath, exif),
-      height: rotated ? dimensions.width : dimensions.height,
-      width: rotated ? dimensions.height : dimensions.width,
-      orientation: dimensions.orientation || 1,
-      exif: {
-        dateTimeOriginal: exif?.exif?.DateTimeOriginal || null,
-      },
+      created: metadata.created,
+      height: metadata.height,
+      width: metadata.width,
+      orientation: metadata.orientation || 1,
+      duration: type === 'image' ? 0 : metadata.duration,
     }
   );
+
+  // Generate video thumbnail
+  if (type === 'video') {
+    const thumbnailPath = await generateVideoThumbnail(item.id, absPath);
+
+    // Update item
+    item.thumbnailPath = thumbnailPath;
+    await item.save();
+  }
 
   return exists ? null : item;
 }
@@ -132,14 +293,14 @@ async function scanRecursive(currentPath) {
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < files.length; i += 1) {
     const filename = files[i];
-    const absPath = path.join(currentPath, filename);
+    const filePath = path.join(currentPath, filename);
 
-    if (fs.lstatSync(absPath).isDirectory()) {
-      count += await scanRecursive(absPath);
-    } else if (mime.lookup(absPath).startsWith('image/')) {
-      await importFile(absPath);
+    if (fs.lstatSync(filePath).isDirectory()) {
+      count += await scanRecursive(filePath);
+    } else {
+      const imported = await importFile(filePath);
 
-      count += 1;
+      count += imported ? 1 : 0;
     }
   }
   /* eslint-enable no-await-in-loop */
@@ -147,6 +308,12 @@ async function scanRecursive(currentPath) {
   return count;
 }
 
+/**
+ * Scan files.
+ *
+ * @param {Express.Request} req
+ * @param {Express.Response} res
+ */
 async function scan(req, res) {
   try {
     const count = await scanRecursive(process.env.MEDIA_DIR);
@@ -158,6 +325,11 @@ async function scan(req, res) {
   }
 }
 
+/**
+ * Get current datetime as YYYY-MM-DD_HHmmss.uuu.
+ *
+ * @returns {string}
+ */
 function getTimestring() {
   const date = new Date();
   const year = date.getFullYear();
@@ -196,7 +368,7 @@ async function zip(items) {
     });
 
     output.on('close', () => {
-      resolve(resolve(outputPath));
+      resolve(outputPath);
     });
 
     // Error handling
@@ -258,6 +430,12 @@ async function download(req, res) {
   });
 }
 
+/**
+ * Remove file(s).
+ *
+ * @param {Express.Request} req
+ * @param {Express.Response} res
+ */
 async function remove(req, res) {
   const { ids } = req.body;
 
@@ -308,6 +486,52 @@ function resize(imagePath, width, height) {
 }
 
 /**
+ * Send video in chunks.
+ *
+ * @param {Express.Request} req
+ * @param {Express.Response} res
+ * @param {Item} item
+ */
+function streamVideo(req, res, item) {
+  const filePath = item.path;
+  const stat = fs.statSync(filePath);
+  const fileSize = stat.size;
+  const { range } = req.headers;
+
+  if (range) {
+    const parts = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+    if (start >= fileSize) {
+      res
+        .status(416)
+        .send(`Requested range not satisfiable\n${start} >= ${fileSize}`);
+      return;
+    }
+
+    const chunksize = end - start + 1;
+    const file = fs.createReadStream(filePath, { start, end });
+    const head = {
+      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunksize,
+      'Content-Type': 'video/mp4',
+    };
+
+    res.writeHead(206, head);
+    file.pipe(res);
+  } else {
+    const head = {
+      'Content-Length': fileSize,
+      'Content-Type': 'video/mp4',
+    };
+    res.writeHead(200, head);
+    fs.createReadStream(filePath).pipe(res);
+  }
+}
+
+/**
  * Get single item.
  *
  * @param {Express.Request} req
@@ -325,10 +549,21 @@ async function getOne(req, res) {
     const width = parseInt(req.query.w, 10) || item.width;
     const height = parseInt(req.query.h, 10) || item.height;
 
-    res.type(mime.lookup(item.path));
+    let filePath = item.path;
 
-    // Get the resized image
-    resize(item.path, width, height).pipe(res);
+    if (item.type === 'video' && req.query.thumbnail) {
+      filePath = item.thumbnailPath;
+    }
+
+    // Set MIME type
+    res.type(mime.lookup(filePath));
+
+    if (item.type === 'image' || req.query.thumbnail) {
+      // Get the resized image
+      resize(filePath, width, height).pipe(res);
+    } else {
+      streamVideo(req, res, item);
+    }
   } catch (err) {
     console.error(err);
     const status = err.status ? err.status : 500;
@@ -354,15 +589,6 @@ async function getAll(req, res) {
 
     const aggregation = [matchQuery];
 
-    // Get current page
-    const page =
-      req.query.page && req.query.page > 0 ? parseInt(req.query.page, 10) : 1;
-
-    // Results per page
-    const pageSize = !Number.isNaN(Number(req.query.limit))
-      ? Number(req.query.limit)
-      : 100000000;
-
     // Set sort order
     const sortAggregation = {};
     sortAggregation.created = -1;
@@ -370,35 +596,41 @@ async function getAll(req, res) {
 
     const items = await Item.aggregate(
       aggregation.concat([
-        { $skip: (page - 1) * pageSize },
-        { $project: { _id: 0, id: 1, height: 1, width: 1, created: 1 } },
-        { $limit: pageSize },
+        {
+          $project: clientProjection,
+        },
       ])
     ).allowDiskUse(true);
 
-    // Get total number of results without limit
-    const count = await Item.aggregate([
-      matchQuery,
-      { $project: { _id: 1 } },
-      { $count: 'total' },
-    ]);
-    const total = count.length ? count[0].total : 0;
-
-    // Set pages
-    const pages = pageSize > 0 ? Math.ceil(total / pageSize) : 0;
-
     res.json({
       items,
-      page,
-      pageSize,
-      pages,
-      total,
     });
   } catch (err) {
     console.error(err);
     const status = err.status ? err.status : 500;
     res.status(status).send(err.message);
   }
+}
+
+/**
+ * Removes object properties from an array of objects.
+ *
+ * @param {Array} arr
+ * @param {Object} projection
+ * @returns {Array}
+ */
+function project(arr, projection) {
+  return arr.map((el) => {
+    const obj = {};
+
+    Object.keys(el.toJSON()).forEach((key) => {
+      if (Object.keys(projection).includes(key) && projection[key] === 1) {
+        obj[key] = el[key];
+      }
+    });
+
+    return obj;
+  });
 }
 
 /**
@@ -419,16 +651,8 @@ async function upload(req, res) {
   // Remove non-imports
   uploadedItems = uploadedItems.filter((item) => item !== null);
 
-  const returnItems = [];
-
-  for (let i = 0; i < uploadedItems.length; i += 1) {
-    returnItems.push({
-      id: uploadedItems[i].id,
-      width: uploadedItems[i].width,
-      height: uploadedItems[i].height,
-      created: uploadedItems[i].created,
-    });
-  }
+  // Filter item properties
+  const returnItems = project(uploadedItems, clientProjection);
 
   res.status(200).json({ items: returnItems });
 }
@@ -440,4 +664,5 @@ module.exports = {
   download,
   remove,
   upload,
+  streamVideo,
 };

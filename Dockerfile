@@ -2,7 +2,7 @@
 FROM node:16 AS ui-build
 WORKDIR /app
 COPY client/ ./
-RUN npm install
+RUN npm ci
 RUN npm run build
 
 # Build server and move Angular to /dist
@@ -10,7 +10,8 @@ FROM node:16 AS server-build
 WORKDIR /app
 COPY --from=ui-build /app/dist ./dist
 COPY server/ ./
-RUN npm install --production
+RUN npm ci --production
+RUN apt install ffmpeg
 
 # Set environment variables
 ENV DOCKER=true

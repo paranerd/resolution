@@ -2,17 +2,15 @@
   <div class="wrapper">
     <Navbar />
     <div id="timeline" ref="timeline">
-      <div class="no-items" v-if="items.length === 0">
+      <div class="no-items" v-if="itemsFinal.length === 0">
         <span>Nothing to display</span>
         <font-awesome-icon icon="ghost" />
       </div>
       <Item
         v-for="item in itemsFinal"
         :key="item.id"
-        :id="item.id"
-        :width="item.uiWidth"
-        :height="item.uiHeight"
         :ref="setItemRef"
+        :item="item"
       />
     </div>
   </div>
@@ -34,7 +32,6 @@ export default {
   },
   data() {
     return {
-      // items: [],
       itemsFinal: [],
       error: null,
       totalResults: 0,
@@ -58,7 +55,7 @@ export default {
     },
   },
   async created() {
-    this.items = await this.fetchItems();
+    await this.fetchItems();
     this.calculateGallery();
   },
   mounted() {
@@ -71,11 +68,19 @@ export default {
     this.$refs.timeline.removeEventListener('scroll', this.lazyload);
   },
   methods: {
+    /**
+     * Store references to all items.
+     *
+     * @param {HTMLElement}
+     */
     setItemRef(el) {
       if (el) {
         this.itemRefs.push(el);
       }
     },
+    /**
+     * Trigger item load after scroll ended.
+     */
     lazyload() {
       const loadJobTimestamp = Date.now();
       this.currentLoadJobTimestamp = loadJobTimestamp;
@@ -86,6 +91,9 @@ export default {
         }
       }, this.lazyLoadWait);
     },
+    /**
+     * Recalculate gallery on resize.
+     */
     handleResize() {
       const resizeTimestamp = Date.now();
       this.latestResizeTimestamp = resizeTimestamp;
@@ -96,6 +104,9 @@ export default {
         }
       }, 100);
     },
+    /**
+     * Fetch all items metadata.
+     */
     async fetchItems() {
       // Reset
       this.error = '';
@@ -104,7 +115,7 @@ export default {
       this.loading = true;
 
       try {
-        return await ItemService.getAll();
+        await ItemService.getAll();
       } catch (err) {
         console.error(err);
         this.error =
@@ -115,14 +126,12 @@ export default {
       } finally {
         this.loading = false;
       }
-
-      return [];
     },
     /**
      * Calculate the number of pixels that are horizontally added to an .item div.
      * This is done dynamically, since .item margins are set using rem.
      *
-     * @returns number
+     * @returns {number}
      */
     getHorizontalMargin() {
       const div = document.createElement('div');
@@ -142,11 +151,10 @@ export default {
     /**
      * Calculate the total available width.
      *
-     * @returns number
+     * @returns {number}
      */
     getTotalWidth() {
-      const timeline = document.getElementById('timeline');
-      const style = getComputedStyle(timeline);
+      const style = getComputedStyle(this.$refs.timeline);
 
       return parseInt(style.width);
     },
@@ -227,6 +235,11 @@ export default {
 
       this.itemsFinal = itemsFinal.concat(itemsForRow);
     },
+    /**
+     * Determine width of scrollbar.
+     *
+     * @return {number}
+     */
     getScrollbarWidth() {
       // Creating invisible container
       const outer = document.createElement('div');
