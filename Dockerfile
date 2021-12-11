@@ -11,7 +11,8 @@ WORKDIR /app
 COPY --from=ui-build /app/dist ./dist
 COPY server/ ./
 RUN npm ci --production
-RUN apt-get install ffmpeg
+RUN apt update
+RUN apt install ffmpeg
 
 # Set environment variables
 ENV DOCKER=true
