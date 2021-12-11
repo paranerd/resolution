@@ -107,6 +107,11 @@ async function getFileHash(filePath) {
  */
 async function generateVideoThumbnail(id, filePath) {
   return new Promise((resolve, reject) => {
+    // Make sure the thumbnail folder exists
+    if (!fs.existsSync(THUMBNAIL_PATH)) {
+      fs.mkdirSync(THUMBNAIL_PATH, { recursive: true });
+    }
+
     ffmpeg(filePath)
       .screenshots({
         count: 1,
