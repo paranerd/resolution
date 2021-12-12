@@ -6,7 +6,8 @@
     "scripts": {
         "test": "jest --detectOpenHandles",
         "start": "node index.js",
-        "start-dev": "nodemon index.js"
+        "start-dev": "nodemon index.js",
+        "lint": "eslint"
     },
     "author": "paranerd",
     "license": "ISC",
