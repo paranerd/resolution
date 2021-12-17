@@ -47,7 +47,7 @@
         <span class="focus-border"></span>
       </div>
 
-      <button id="submit" type="submit">Login</button>
+      <button id="submit" type="submit">Setup</button>
 
       <!-- Error -->
       <div v-if="error" class="error">{{ error }}</div>
