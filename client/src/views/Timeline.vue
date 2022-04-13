@@ -149,11 +149,11 @@ export default {
       return outerWidth - innerWidth;
     },
     /**
-     * Calculate the total available width.
+     * Calculate timeline's total available width.
      *
      * @returns {number}
      */
-    getTotalWidth() {
+    getTimelineWidth() {
       const style = getComputedStyle(this.$refs.timeline);
 
       return parseInt(style.width);
@@ -167,9 +167,9 @@ export default {
      * (3) Scale down further if the maximum row height is exceeded
      */
     calculateGallery() {
-      const totalWidth = this.getTotalWidth();
+      const timelineRealWidth =
+        this.getTimelineWidth() - this.getScrollbarWidth();
       const horizontalMargin = this.getHorizontalMargin();
-      const scrollbarWidth = this.getScrollbarWidth();
 
       const minHeight = 300;
       const maxHeight = 550;
@@ -184,9 +184,7 @@ export default {
         // Calculate the remaining width available in the current row
         // Subtract space for scrollbar
         const availableWidth =
-          totalWidth -
-          itemsForRow.length * horizontalMargin -
-          scrollbarWidth * 1.5;
+          timelineRealWidth - itemsForRow.length * horizontalMargin;
 
         // Get height of largest item
         const largestHeight = itemsForRow
@@ -219,8 +217,8 @@ export default {
 
         // Set the actual widths and heights to be displayed
         itemsForRow.forEach((item) => {
-          item.uiWidth = Math.ceil(item.scaledUpWidth * scale);
-          item.uiHeight = Math.ceil(rowHeight);
+          item.uiWidth = Math.floor(item.scaledUpWidth * scale);
+          item.uiHeight = Math.floor(rowHeight);
         });
 
         // Once the number of items in the row is so large
@@ -241,20 +239,21 @@ export default {
      * @return {number}
      */
     getScrollbarWidth() {
-      // Creating invisible container
+      // Create invisible container
       const outer = document.createElement('div');
       outer.style.visibility = 'hidden';
-      outer.style.overflow = 'scroll'; // forcing scrollbar to appear
+      // Force scrollbar to appear
+      outer.style.overflow = 'scroll';
       document.body.appendChild(outer);
 
-      // Creating inner element and placing it in the container
+      // Create inner element and place it in the container
       const inner = document.createElement('div');
       outer.appendChild(inner);
 
-      // Calculating difference between container's full width and the child width
+      // Calculate difference between container's full width and the child width
       const scrollbarWidth = outer.offsetWidth - inner.offsetWidth;
 
-      // Removing temporary elements from the DOM
+      // Remove temporary elements from the DOM
       outer.parentNode.removeChild(outer);
 
       return scrollbarWidth;
