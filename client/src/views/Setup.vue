@@ -56,7 +56,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import axios from '@/services/axios.js';
 
 export default {
   name: 'Setup',
@@ -79,15 +79,16 @@ export default {
       };
 
       try {
-        await axios.post(`${process.env.VUE_APP_API_URL}/user/setup`, body);
+        await axios.post(`${process.env.VUE_APP_API_URL}/auth/setup`, body);
 
         this.$router.push({ name: 'timeline' });
       } catch (err) {
-        if (err.response.status == 403) {
-          this.error = 'Invalid username or password';
-        } else {
-          this.error = err.response.data.msg;
-        }
+        // Reset passwords
+        this.password1 = '';
+        this.password2 = '';
+
+        // Show error to user
+        this.error = err.response.data.msg;
       }
     },
   },

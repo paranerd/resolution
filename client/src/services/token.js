@@ -1,4 +1,4 @@
-import UserService from '@/services/user';
+import AuthService from '@/services/auth';
 
 class TokenService {
   static tokenKey = 'jwt';
@@ -34,7 +34,7 @@ class TokenService {
       this.expires - TokenService.prefetchWindowSec < Date.now() / 1000
     ) {
       try {
-        await UserService.renewToken();
+        await AuthService.renewToken();
       } catch (err) {
         console.error('Token refresh failed');
       }

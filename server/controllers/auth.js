@@ -20,7 +20,7 @@ async function setup(req, res) {
   const userCount = await User.countDocuments();
 
   if (userCount) {
-    res.status(403).json({ msg: 'Already set up' });
+    res.status(401).json({ msg: 'Already set up' });
     return;
   }
 
@@ -32,18 +32,23 @@ async function setup(req, res) {
       isAdmin: true,
     });
 
-    // Save user
-    await user.save();
-
-    // Generate an access token
+    // Generate access token
     const token = auth.generateToken({
       username: user.username,
       isAdmin: user.isAdmin,
     });
+
+    // Generate refresh token
     const refreshToken = auth.generateRefreshToken({
       username: user.username,
       refresh: true,
     });
+
+    // Add refresh token to user
+    user.refreshToken.push(refreshToken);
+
+    // Save user
+    await user.save();
 
     // Return to client
     res.json({
@@ -53,7 +58,7 @@ async function setup(req, res) {
       refreshToken,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ msg: 'An error occurred' });
   }
 }
@@ -72,29 +77,34 @@ async function login(req, res) {
   const user = await User.findOne({ username });
 
   // Check for existance and password
-  if (user && (await user.validatePassword(password))) {
-    // Generate new tokens
-    const token = auth.generateToken({
-      username: user.username,
-      isAdmin: user.isAdmin,
-    });
-    const refreshToken = auth.generateRefreshToken({
-      username: user.username,
-      refresh: true,
-    });
-
-    user.refreshToken.push(refreshToken);
-    await user.save();
-
-    res.json({
-      username: user.username,
-      isAdmin: user.isAdmin,
-      token,
-      refreshToken,
-    });
-  } else {
-    res.status(403).json({ msg: 'Invalid username or password' });
+  if (!user || !(await user.validatePassword(password))) {
+    res.status(401).json({ msg: 'Incorrect user or password' });
   }
+
+  // Generate access token
+  const token = auth.generateToken({
+    username: user.username,
+    isAdmin: user.isAdmin,
+  });
+
+  // Generate refresh token
+  const refreshToken = auth.generateRefreshToken({
+    username: user.username,
+    refresh: true,
+  });
+
+  // Add refresh token to user
+  user.refreshToken.push(refreshToken);
+
+  // Save user
+  await user.save();
+
+  res.json({
+    username: user.username,
+    isAdmin: user.isAdmin,
+    token,
+    refreshToken,
+  });
 }
 
 /**
@@ -123,7 +133,7 @@ async function logout(req, res) {
 }
 
 /**
- * Renew refresh token.
+ * Endpoint to refresh auth token.
  *
  * @param {Express.Request} req
  * @param {Express.Response} res

@@ -66,7 +66,7 @@ export default {
       };
 
       try {
-        await axios.post(`/user/login`, body);
+        await axios.post(`/auth/login`, body);
 
         this.$router.push({ name: 'timeline' });
       } catch (err) {

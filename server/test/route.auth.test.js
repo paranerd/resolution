@@ -25,7 +25,7 @@ afterAll(async () => {
 
 describe('User routes', () => {
   it('Should show error for password missmatch on setup', async () => {
-    const res = await request(app).post('/api/user/setup').send({
+    const res = await request(app).post('/api/auth/setup').send({
       username,
       password1: password,
       password2: 'wrong-password',
@@ -35,7 +35,7 @@ describe('User routes', () => {
   });
 
   it('Should create admin user', async () => {
-    const res = await request(app).post('/api/user/setup').send({
+    const res = await request(app).post('/api/auth/setup').send({
       username,
       password1: password,
       password2: password,
@@ -46,7 +46,7 @@ describe('User routes', () => {
   });
 
   it('Should not allow creating another admin user', async () => {
-    const res = await request(app).post('/api/user/setup').send({
+    const res = await request(app).post('/api/auth/setup').send({
       username,
       password1: password,
       password2: password,
@@ -56,7 +56,7 @@ describe('User routes', () => {
   });
 
   it('Should not allow login with wrong credentials', async () => {
-    const res = await request(app).post('/api/user/login').send({
+    const res = await request(app).post('/api/auth/login').send({
       username,
       password: 'wrong-password',
     });
@@ -65,7 +65,7 @@ describe('User routes', () => {
   });
 
   it('Should return token and refresh token on successful login', async () => {
-    const res = await request(app).post('/api/user/login').send({
+    const res = await request(app).post('/api/auth/login').send({
       username,
       password,
     });
@@ -79,7 +79,7 @@ describe('User routes', () => {
 
   it('Should obtain new refresh token', async () => {
     const res = await request(app)
-      .post('/api/user/refresh')
+      .post('/api/auth/refresh')
       .set('Authorization', `Bearer ${refreshToken}`);
 
     expect(res.statusCode).toEqual(200);
@@ -89,7 +89,7 @@ describe('User routes', () => {
 
   it('Should remove refreshToken from db on logout', async () => {
     const res = await request(app)
-      .post('/api/user/logout')
+      .post('/api/auth/logout')
       .set('Authorization', `Bearer ${refreshToken}`);
 
     expect(res.statusCode).toEqual(200);

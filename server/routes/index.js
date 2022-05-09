@@ -10,8 +10,8 @@ const auth = require('../middleware/auth');
 const uploader = require('../middleware/upload');
 
 // Controllers
+const authController = require('../controllers/auth');
 const itemController = require('../controllers/item');
-const userController = require('../controllers/user');
 const systemController = require('../controllers/system');
 
 // Include cookie parser
@@ -21,6 +21,16 @@ router.use(cookieParser());
 if (!process.env.PRODUCTION) {
   router.use(cors({ exposedHeaders: 'Content-Disposition' }));
 }
+
+// Auth routes
+router.post('/api/auth/setup', authController.setup);
+router.post('/api/auth/login', authController.login);
+router.post('/api/auth/logout', auth.isAuthenticated(), authController.logout);
+router.post(
+  '/api/auth/refresh',
+  auth.isAuthenticated(),
+  authController.refresh
+);
 
 // Item routes
 router.get(
@@ -38,16 +48,6 @@ router.post('/api/item/scan', auth.isAuthenticated(), itemController.scan);
 router.get('/api/item/:id', auth.isAuthenticated(), itemController.getOne);
 router.delete('/api/item', auth.isAuthenticated(), itemController.remove);
 router.get('/api/item', auth.isAuthenticated(), itemController.getAll);
-
-// User routes
-router.post('/api/user/setup', userController.setup);
-router.post('/api/user/login', userController.login);
-router.post(
-  '/api/user/refresh',
-  auth.isAuthenticated(),
-  userController.refresh
-);
-router.post('/api/user/logout', auth.isAuthenticated(), userController.logout);
 
 // System routes
 router.get(

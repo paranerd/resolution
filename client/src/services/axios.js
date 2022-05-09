@@ -10,7 +10,7 @@ const axiosService = axios.create({
 // Handling requests
 axiosService.interceptors.request.use(async (request) => {
   // Set JWT according to request
-  const token = ['/user/refresh', '/user/logout'].includes(request.url)
+  const token = ['/auth/refresh', '/auth/logout'].includes(request.url)
     ? TokenService.getRefreshToken()
     : await TokenService.getToken(false);
 
@@ -25,8 +25,8 @@ axiosService.interceptors.request.use(async (request) => {
 axiosService.interceptors.response.use(
   (response) => {
     if (
-      ['/user/login', '/user/setup', '/user/refresh'].includes(
-        response.config.url
+      ['/auth/login', '/auth/setup', '/auth/refresh'].some((v) =>
+        response.config.url.includes(v)
       )
     ) {
       TokenService.updateToken(response.data.token);
@@ -38,7 +38,7 @@ axiosService.interceptors.response.use(
   async (error) => {
     const originalConfig = error.config;
 
-    if (originalConfig.url !== '/user/refresh' && error.response) {
+    if (originalConfig.url !== '/auth/refresh' && error.response) {
       // Access Token was expired
       if (error.response.status === 401 && !originalConfig._retry) {
         originalConfig._retry = true;
@@ -46,7 +46,7 @@ axiosService.interceptors.response.use(
         try {
           // Call for refresh
           // Let the successful-response-handler update tokens
-          await axiosService.post('/user/refresh');
+          await axiosService.post('/auth/refresh');
 
           return axiosService(originalConfig);
         } catch (_error) {

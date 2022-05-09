@@ -1,14 +1,14 @@
 import TokenService from './token';
 import axios from './axios';
 
-class UserService {
+class AuthService {
   /**
    * Remove access token both locally and remotely.
    */
   async logout() {
     try {
       // Remove refresh token from server
-      await axios.post('/user/logout');
+      await axios.post('/auth/logout');
     } catch (err) {
       console.error(err);
     } finally {
@@ -22,8 +22,8 @@ class UserService {
    * Axios interceptor handles storing the tokens.
    */
   async renewToken() {
-    await axios.post('/user/refresh');
+    await axios.post('/auth/refresh');
   }
 }
 
-export default new UserService();
+export default new AuthService();
