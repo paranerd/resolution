@@ -17,6 +17,7 @@ import {
   faTrash,
   faPlayCircle,
   faPauseCircle,
+  faUpload,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
@@ -37,7 +38,8 @@ library.add(
   faSyncAlt,
   faTrash,
   faPlayCircle,
-  faPauseCircle
+  faPauseCircle,
+  faUpload
 );
 
 createApp(App)

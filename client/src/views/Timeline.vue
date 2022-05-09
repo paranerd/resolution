@@ -15,11 +15,13 @@
     </div>
   </div>
   <ItemActions />
+  <UploadStatus />
 </template>
 
 <script>
 import Navbar from '@/components/Navbar.vue';
 import ItemActions from '@/components/ItemActions.vue';
+import UploadStatus from '@/components/UploadStatus.vue';
 import Item from '@/components/Item.vue';
 import ItemService from '@/services/item';
 
@@ -29,6 +31,7 @@ export default {
     Item,
     Navbar,
     ItemActions,
+    UploadStatus,
   },
   data() {
     return {

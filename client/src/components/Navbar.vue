@@ -1,5 +1,6 @@
 <template>
   <nav>
+    <!-- Brand -->
     <div id="brand-container">
       <router-link class="brand" to="/">
         <font-awesome-icon icon="gem" class="brand-icon" />
@@ -7,6 +8,7 @@
       </router-link>
     </div>
 
+    <!-- Searchbar -->
     <form id="search-form">
       <button class="search-icon">
         <font-awesome-icon icon="search" />
@@ -25,11 +27,7 @@
 
       <!-- Upload -->
       <button class="navbar-button">
-        <svg width="24px" height="24px" viewBox="0 0 24 24">
-          <path
-            d="M4 15h2v3h12v-3h2v3c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2m4.41-7.59L11 7.83V16h2V7.83l2.59 2.59L17 9l-5-5-5 5 1.41 1.41z"
-          ></path>
-        </svg>
+        <font-awesome-icon icon="upload" />
         <Upload />
       </button>
 
@@ -45,7 +43,7 @@
 <script>
 import ContextMenu from '@/components/ContextMenu.vue';
 import Upload from '@/components/Upload.vue';
-import UserService from '@/services/user';
+import AuthService from '@/services/auth';
 import ItemService from '@/services/item';
 import axios from '@/services/axios.js';
 
@@ -73,7 +71,7 @@ export default {
   },
   methods: {
     async logout() {
-      await UserService.logout();
+      await AuthService.logout();
       this.$router.push('login');
     },
     async scan() {

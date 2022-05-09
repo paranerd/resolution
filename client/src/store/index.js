@@ -20,9 +20,19 @@ const store = createStore({
       castAppId: '',
       sortBy: 'created',
       sortOrder: -1,
+      upload: {
+        thumbnail: '',
+        filename: '',
+        progress: 0,
+        current: 0,
+        total: 0,
+      },
     };
   },
   mutations: {
+    updateUploadStatus(state, status) {
+      state.upload = { ...state.upload, ...status };
+    },
     /**
      * Set items.
      *
@@ -53,6 +63,8 @@ const store = createStore({
       state.items = state.items
         .filter((item) => !ids.includes(item.id))
         .sort(compare(state.sortBy, state.sortOrder));
+
+      state.selected = state.selected.filter((id) => !ids.includes(id));
     },
     /**
      * Set item as selected.
@@ -84,6 +96,11 @@ const store = createStore({
      */
     setCastAppId(state, id) {
       state.castAppId = id;
+    },
+  },
+  getters: {
+    uploadStatus: (state) => {
+      return state.upload;
     },
   },
 });
