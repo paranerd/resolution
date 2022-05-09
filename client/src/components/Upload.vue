@@ -19,7 +19,6 @@ export default {
     return {
       file: null,
       queue: [],
-      uploading: false,
       current: 0,
       total: 0,
     };
@@ -28,42 +27,19 @@ export default {
     pickFile() {
       this.$refs.fileInput.click();
     },
-    async handleFileUpload(e) {
-      const formData = new FormData();
-      for (const file of e.target.files) {
-        formData.append('files', file);
-      }
-
-      const res = await axios.post('/item/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (event) => {
-          const percentage = parseInt(
-            Math.round((event.loaded / event.total) * 100)
-          );
-          console.log(percentage);
-        },
-      });
-
-      // Reset file input
-      this.$refs.fileInput.value = null;
-
-      // Add uploaded items
-      if (res.data.items.length) {
-        this.$store.commit('addItems', res.data.items);
-      }
-    },
     updateQueue(e) {
+      // Add all files to upload queue
       for (const file of e.target.files) {
         this.queue.push(file);
       }
 
-      if (!this.uploading) {
-        this.handleFileUploadNew();
+      // Start uploading if not started
+      if (this.queue.length === e.target.files.length) {
+        this.handleFileUpload();
       }
     },
-    async handleFileUploadNew() {
+    async handleFileUpload() {
+      // Loop over upload queue
       while (this.queue.length) {
         this.current += 1;
         const file = this.queue.shift();
@@ -102,8 +78,6 @@ export default {
           },
         });
 
-        await this.delay(1);
-
         // Add uploaded items
         if (res.data.items.length) {
           this.$store.commit('addItems', res.data.items);
@@ -113,59 +87,6 @@ export default {
       // Reset file input
       this.$refs.fileInput.value = null;
     },
-    async handleFileUploadSingle(e) {
-      for (let i = 0; i < e.target.files.length; i += 1) {
-        const file = e.target.files[i];
-
-        const formData = new FormData();
-        formData.append('files', file);
-        const reader = new FileReader();
-
-        this.$store.commit('updateUploadStatus', {
-          filename: file.name,
-          current: i + 1,
-          total: e.target.files.length,
-        });
-
-        reader.onload = (event) => {
-          var img = new Image();
-          img.src = event.target.result;
-
-          this.$store.commit('updateUploadThumbnail', `url('${event.target.result}')`);
-        };
-        reader.readAsDataURL(file);
-
-        const res = await axios.post('/item/upload', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          onUploadProgress: (event) => {
-            const percentage = parseInt(
-              Math.round((event.loaded / event.total) * 100)
-            );
-            console.log(percentage);
-
-            this.$store.commit('updateUploadStatus', {
-              progress: percentage,
-            });
-          },
-        });
-
-        await this.delay(1);
-
-        // Add uploaded items
-        if (res.data.items.length) {
-          this.$store.commit('addItems', res.data.items);
-        }
-      }
-
-      console.log('resetting fileInput');
-      // Reset file input
-      this.$refs.fileInput.value = null;
-    },
-    delay(time) {
-      return new Promise(resolve => setTimeout(resolve, time));
-    }
   },
 };
 </script>
