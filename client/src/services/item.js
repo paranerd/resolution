@@ -40,11 +40,9 @@ class ItemService {
    * @param {Array<String>} ids
    */
   async remove(ids) {
-    console.log('removing', ids);
     try {
       // Fetch items from server
-      const res = await axios.delete('/item', { data: { ids } });
-      console.log(res);
+      await axios.delete('/item', { data: { ids } });
 
       return null;
     } catch (err) {
