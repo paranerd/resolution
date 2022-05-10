@@ -20,7 +20,7 @@ async function setup(req, res) {
   const userCount = await User.countDocuments();
 
   if (userCount) {
-    res.status(401).json({ msg: 'Already set up' });
+    res.status(403).json({ msg: 'Already set up' });
     return;
   }
 
@@ -79,6 +79,7 @@ async function login(req, res) {
   // Check for existance and password
   if (!user || !(await user.validatePassword(password))) {
     res.status(401).json({ msg: 'Incorrect user or password' });
+    return;
   }
 
   // Generate access token

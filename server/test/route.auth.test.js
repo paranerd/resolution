@@ -61,7 +61,7 @@ describe('User routes', () => {
       password: 'wrong-password',
     });
 
-    expect(res.statusCode).toEqual(403);
+    expect(res.statusCode).toEqual(401);
   });
 
   it('Should return token and refresh token on successful login', async () => {
