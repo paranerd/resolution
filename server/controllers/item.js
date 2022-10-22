@@ -231,11 +231,18 @@ async function hasChanged(item) {
  * @returns {Item}
  */
 async function importFile(absPath) {
+  const mimeType = mime.lookup(absPath);
+
+  if (!mimeType) {
+    console.log(`MIME type of ${absPath} could not be determined. Skipping.`);
+    return null;
+  }
+
   // Get MIME type
-  const type = mime.lookup(absPath).split('/')[0];
+  const mediaType = mimeType.split('/')[0];
 
   // Only support images and videos
-  if (!['image', 'video'].includes(type)) {
+  if (!['image', 'video'].includes(mediaType)) {
     return null;
   }
 
@@ -252,7 +259,7 @@ async function importFile(absPath) {
 
   try {
     metadata =
-      type === 'image'
+      mediaType === 'image'
         ? await readImageMetadata(absPath)
         : await readVideoMetadata(absPath);
   } catch (err) {
@@ -262,19 +269,19 @@ async function importFile(absPath) {
   const item = await Item.updateOrCreate(
     { path: absPath },
     {
-      type,
+      type: mediaType,
       hash: await getFileHash(absPath),
       filename: path.basename(absPath),
       created: metadata.created,
       height: metadata.height,
       width: metadata.width,
       orientation: metadata.orientation || 1,
-      duration: type === 'image' ? 0 : metadata.duration,
+      duration: mediaType === 'image' ? 0 : metadata.duration,
     }
   );
 
   // Generate video thumbnail
-  if (type === 'video') {
+  if (mediaType === 'video') {
     const thumbnailPath = await generateVideoThumbnail(item.id, absPath);
 
     // Update item
