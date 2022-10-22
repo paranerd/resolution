@@ -60,13 +60,15 @@ describe('Item routes', () => {
     fs.mkdirSync(process.env.UPLOAD_DIR, { recursive: true });
   }
 
-  // Copy one testfile to upload folder
-  const source = path.join(testfileDir, 'test-1.jpg');
-  const mediaDest = path.join(process.env.MEDIA_DIR, 'test-1.jpg');
+  // Copy test-1 to upload folder
+  const source1 = path.join(testfileDir, 'test-1.jpg');
   const uploadDest = path.join(process.env.UPLOAD_DIR, 'test-1.jpg');
+  fs.copyFileSync(source1, uploadDest);
 
-  fs.copyFileSync(source, mediaDest);
-  fs.copyFileSync(source, uploadDest);
+  // Copy test-2 to media folder
+  const source2 = path.join(testfileDir, 'test-2.jpg');
+  const mediaDest = path.join(process.env.MEDIA_DIR, 'test-2.jpg');
+  fs.copyFileSync(source2, mediaDest);
 
   it('Should return token on successful login', async () => {
     const res = await request(app).post('/api/auth/login').send({
@@ -139,6 +141,7 @@ describe('Item routes', () => {
 
     // Get test-1.jpg item
     item = res.body.items.find((el) => el.width === 416 && el.height === 521);
+    console.log(item);
   });
 
   it('Should contain all required properties', async () => {
