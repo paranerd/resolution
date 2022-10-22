@@ -141,7 +141,6 @@ describe('Item routes', () => {
 
     // Get test-1.jpg item
     item = res.body.items.find((el) => el.width === 416 && el.height === 521);
-    console.log(item);
   });
 
   it('Should contain all required properties', async () => {
