@@ -1,16 +1,18 @@
-# Build Angular client
-FROM node:16 AS ui-build
+# Build client
+FROM node:lts-alpine AS ui-build
 WORKDIR /app
 COPY client/ ./
 RUN npm ci
 RUN npm run build
 
-# Build server and move Angular to /dist
-FROM node:16 AS server-build
+# Build server and move client to /dist
+FROM node:lts-alpine AS server-build
 WORKDIR /app
 COPY --from=ui-build /app/dist ./dist
 COPY server/ ./
 RUN npm ci --production
+
+# Install dependencies
 RUN apt-get update -y
 RUN apt-get install -y ffmpeg
 
