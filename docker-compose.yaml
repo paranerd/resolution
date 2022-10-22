@@ -1,13 +1,14 @@
-version: "3"
+version: '3'
+
 services:
   server:
     image: paranerd/resolution
     container_name: resolution
     restart: unless-stopped
     environment:
-      CAST_APP_ID: "12345"
+      CAST_APP_ID: '12345'
     ports:
-      - "8080:8080"
+      - '8080:8080'
     depends_on:
       - mongo
     volumes:
