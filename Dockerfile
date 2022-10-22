@@ -13,8 +13,7 @@ COPY server/ ./
 RUN npm ci --production
 
 # Install dependencies
-RUN apt-get update -y
-RUN apt-get install -y ffmpeg
+RUN apk --update add ffmpeg
 
 # Set environment variables
 ENV DOCKER=true
