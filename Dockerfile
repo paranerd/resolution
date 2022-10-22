@@ -1,5 +1,5 @@
 # Build client
-FROM node:lts-alpine AS ui-build
+FROM node:lts-alpine AS client-build
 WORKDIR /app
 COPY client/ ./
 RUN npm ci
@@ -8,7 +8,7 @@ RUN npm run build
 # Build server and move client to /dist
 FROM node:lts-alpine AS server-build
 WORKDIR /app
-COPY --from=ui-build /app/dist ./dist
+COPY --from=client-build /app/dist ./dist
 COPY server/ ./
 RUN npm ci --production
 
