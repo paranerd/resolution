@@ -62,8 +62,8 @@ describe('Item routes', () => {
 
   // Copy one testfile to upload folder
   const source = path.join(testfileDir, 'test-1.jpg');
-  const mediaDest = path.join(process.env.MEDIA_DIR, 'test-2.jpg');
-  const uploadDest = path.join(process.env.UPLOAD_DIR, 'test-2.jpg');
+  const mediaDest = path.join(process.env.MEDIA_DIR, 'test-1.jpg');
+  const uploadDest = path.join(process.env.UPLOAD_DIR, 'test-1.jpg');
 
   fs.copyFileSync(source, mediaDest);
   fs.copyFileSync(source, uploadDest);

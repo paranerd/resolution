@@ -6,3 +6,5 @@ media_backup/
 .env.local
 thumbnails/
 debug.js
+.DS_Store
+**/.DS_Store
