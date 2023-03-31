@@ -3,8 +3,10 @@ data/
 tmp/
 media/
 media_backup/
-.env.local
 thumbnails/
+build/
+dist/
+.env.local
 debug.js
 .DS_Store
 **/.DS_Store

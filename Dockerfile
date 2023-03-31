@@ -5,12 +5,19 @@ COPY client/ ./
 RUN npm ci
 RUN npm run build
 
-# Build server and move client to /dist
+# Build server
 FROM node:lts-alpine AS server-build
 WORKDIR /app
-COPY --from=client-build /app/dist ./dist
 COPY server/ ./
-RUN npm ci --production
+RUN npm ci
+RUN npm run build
+
+# Put everything together
+FROM node:lts-alpine
+WORKDIR /app
+COPY --from=server-build /app/dist /app/package*.json ./
+COPY --from=client-build /app/dist ./static
+RUN npm ci
 
 # Install dependencies
 RUN apk --update add ffmpeg
@@ -25,4 +32,4 @@ ENV MEDIA_DIR=/app/media
 EXPOSE 8080
 
 # Start server
-CMD ["node", "index.js"]
+CMD ["node", "src/index.js"]

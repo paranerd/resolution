@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "es2020",
+    "lib": ["es2020"],
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false
+  },
+  "ts-node": {
+    "esm": true
+  },
+  "ts-jest": {
+    "esm": true
+  },
+  "include": ["src/**/*", "test/**/*", "rollup.config.ts"]
+}

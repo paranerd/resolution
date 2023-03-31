@@ -1,0 +1,16 @@
+{
+  "preset": "ts-jest",
+  "verbose": true,
+  "testEnvironment": "node",
+  "testTimeout": 10000,
+  "coveragePathIgnorePatterns": ["/node_modules/"],
+  "modulePathIgnorePatterns": ["<rootDir>/dist/"],
+  "testPathIgnorePatterns": ["<rootDir>/dist/"],
+  "extensionsToTreatAsEsm": [".ts"],
+  "moduleNameMapper": {
+    "^(\\.{1,2}/.*)\\.js$": "$1"
+  },
+  "transform": {
+    "^.+\\.tsx?$": "ts-jest"
+  }
+}
